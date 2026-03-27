@@ -86,7 +86,14 @@ async def test_summarize_raises_on_http_error(provider):
 
 @pytest.mark.asyncio
 @respx.mock
-async def test_tag_book_raises_not_implemented(provider):
-    """AnthropicProvider não implementa tagging — deve levantar NotImplementedError."""
-    with pytest.raises(NotImplementedError):
-        await provider.tag_book(text="text", taxonomy={})
+async def test_tag_book_returns_tag_result(provider):
+    """AnthropicProvider agora implementa tagging via JSON response."""
+    respx.post("https://api.anthropic.com/v1/messages").mock(
+        return_value=httpx.Response(200, json={
+            "content": [{"type": "text", "text": '{"system": "OSR", "category": "Adventure/Module", "genre": "Fantasy", "extra_tags": ["dungeon"], "confidence": 0.9}'}]
+        })
+    )
+    result = await provider.tag_book(text="text", taxonomy={"systems": ["OSR"], "categories": ["Adventure/Module"], "genres": ["Fantasy"]})
+    assert result.system_tags == ["OSR"]
+    assert result.category_tags == ["Adventure/Module"]
+    assert result.genre_tags == ["Fantasy"]

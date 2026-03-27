@@ -1,8 +1,11 @@
 """FastAPI app — registra routers e injeta dependências."""
 from __future__ import annotations
 
+import logging
 import os
 from typing import Annotated
+
+logging.basicConfig(level=logging.INFO)
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware

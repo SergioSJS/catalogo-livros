@@ -46,10 +46,10 @@ llm:
       tasks: ["tags", "system_detect"]
       env_key: "OPENROUTER_API_KEY"
 
-    - name: "claude-summary"
+    - name: "claude-haiku"
       type: "anthropic"
-      model: "claude-sonnet-4-20250514"
-      tasks: ["summary"]
+      model: "claude-haiku-4-5-20251001"
+      tasks: ["tags", "summary"]
       env_key: "ANTHROPIC_API_KEY"
 
     - name: "gemini-fallback"
