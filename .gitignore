@@ -1,0 +1,37 @@
+# Env
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Data (nunca commitar dados locais)
+/data/
+*.db
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

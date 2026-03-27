@@ -1,0 +1,38 @@
+services:
+  rpg-indexer:
+    build: ./indexer
+    # image: ghcr.io/sergiojs/rpg-catalog/indexer:latest
+    container_name: rpg-indexer
+    restart: unless-stopped
+    ports:
+      - "8564:8564"
+    volumes:
+      - ${RPG_DATA_PATH:-/data/rpg}:/data/rpg:ro
+      - thumbnails:/data/thumbnails
+      - indexer-db:/data/db
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8564/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  rpg-catalog:
+    build: ./catalog-site
+    # image: ghcr.io/sergiojs/rpg-catalog/catalog:latest
+    container_name: rpg-catalog
+    restart: unless-stopped
+    ports:
+      - "8160:80"
+    volumes:
+      - thumbnails:/data/thumbnails:ro
+    depends_on:
+      rpg-indexer:
+        condition: service_healthy
+
+volumes:
+  thumbnails:
+  indexer-db:

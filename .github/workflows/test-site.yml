@@ -1,0 +1,27 @@
+name: Test Site
+
+on:
+  push:
+    paths: ['catalog-site/**']
+  pull_request:
+    paths: ['catalog-site/**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: catalog-site/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: catalog-site
+
+      - name: Run tests
+        run: npm run test:run
+        working-directory: catalog-site

@@ -1,0 +1,43 @@
+sources:
+  - path: "EN"
+    language: "en"
+    recursive: true
+  - path: "PT"
+    language: "pt"
+    recursive: true
+    extra_tags: ["test-pt"]
+
+file_extensions: [".pdf"]
+
+rpg_base_path: "__REPLACED_BY_FIXTURE__"
+database_path: "__REPLACED_BY_FIXTURE__"
+thumbnails_dir: "__REPLACED_BY_FIXTURE__"
+
+thumbnail:
+  width: 300
+  height: 420
+  format: "webp"
+  quality: 80
+
+indexing:
+  min_file_size: 1
+  max_llm_file_size: 104857600
+  llm_sample_pages: 2
+  batch_size: 5
+
+llm:
+  enabled: false
+  timeout: 30
+  providers: []
+
+tag_taxonomy:
+  systems:
+    - "Mausritter"
+    - "OSR"
+    - "Other"
+  categories:
+    - "Core Rulebook"
+    - "Other"
+  genres:
+    - "Fantasy"
+    - "Other"

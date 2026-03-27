@@ -1,0 +1,119 @@
+sources:
+  - path: "EN"
+    language: "en"
+    recursive: true
+  - path: "PT"
+    language: "pt"
+    recursive: true
+  - path: "MY_RPG"
+    language: "pt"
+    recursive: true
+    extra_tags: ["homebrew"]
+  - path: "Revistas"
+    language: "pt"
+    recursive: true
+    extra_tags: ["magazine", "zine"]
+  - path: "Old School"
+    language: "pt"
+    recursive: true
+    extra_tags: ["OSR"]
+
+file_extensions: [".pdf"]
+
+rpg_base_path: "/data/rpg"
+database_path: "/data/db/catalog.db"
+thumbnails_dir: "/data/thumbnails"
+
+thumbnail:
+  width: 300
+  height: 420
+  format: "webp"
+  quality: 80
+
+indexing:
+  min_file_size: 10240       # 10 KB
+  max_llm_file_size: 104857600  # 100 MB
+  llm_sample_pages: 5
+  batch_size: 20
+
+llm:
+  enabled: true
+  timeout: 120
+  providers:
+    - name: "openrouter-tags"
+      type: "openrouter"
+      model: "meta-llama/llama-3.1-70b-instruct"
+      tasks: ["tags", "system_detect"]
+      env_key: "OPENROUTER_API_KEY"
+
+    - name: "claude-summary"
+      type: "anthropic"
+      model: "claude-sonnet-4-20250514"
+      tasks: ["summary"]
+      env_key: "ANTHROPIC_API_KEY"
+
+    - name: "gemini-fallback"
+      type: "google"
+      model: "gemini-2.0-flash"
+      tasks: ["tags", "summary", "system_detect"]
+      env_key: "GOOGLE_API_KEY"
+
+    - name: "openrouter-fallback"
+      type: "openrouter"
+      model: "google/gemini-flash-1.5"
+      tasks: ["tags", "summary"]
+      env_key: "OPENROUTER_API_KEY"
+
+tag_taxonomy:
+  systems:
+    - "D&D 5e"
+    - "D&D 3.5"
+    - "Pathfinder 2e"
+    - "Old Dragon 2e"
+    - "Mausritter"
+    - "Mörk Borg"
+    - "Blades in the Dark"
+    - "Forged in the Dark"
+    - "PbtA"
+    - "OSR"
+    - "Savage Worlds"
+    - "Call of Cthulhu"
+    - "GURPS"
+    - "Fate"
+    - "Cypher System"
+    - "Year Zero Engine"
+    - "Cortex Prime"
+    - "Ironsworn/Starforged"
+    - "DCC"
+    - "Ordem Paranormal"
+    - "System Agnostic"
+    - "Other"
+  categories:
+    - "Core Rulebook"
+    - "Supplement"
+    - "Adventure/Module"
+    - "Setting/Worldbook"
+    - "Bestiary"
+    - "Solo RPG"
+    - "Zine/Pamphlet"
+    - "Map Pack"
+    - "GM Tools"
+    - "Quick Start"
+    - "SRD"
+    - "Magazine"
+    - "Character Sheet"
+    - "Homebrew"
+    - "Other"
+  genres:
+    - "Fantasy"
+    - "Sci-Fi"
+    - "Horror"
+    - "Post-Apocalyptic"
+    - "Cyberpunk"
+    - "Steampunk"
+    - "Historical"
+    - "Modern"
+    - "Weird/Experimental"
+    - "Kids/Family"
+    - "Superhero"
+    - "Other"
