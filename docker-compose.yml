@@ -1,38 +1,124 @@
+name: rpg-catalog
+
 services:
   rpg-indexer:
-    build: ./indexer
-    # image: ghcr.io/sergiojs/rpg-catalog/indexer:latest
+    cpu_shares: 90
+    command: []
     container_name: rpg-indexer
-    restart: unless-stopped
-    ports:
-      - "8564:8564"
-    volumes:
-      - ${RPG_DATA_PATH:-/data/rpg}:/data/rpg:ro
-      - thumbnails:/data/thumbnails
-      - indexer-db:/data/db
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8564/api/health"]
-      interval: 30s
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8564/api/health
       timeout: 5s
+      interval: 30s
       retries: 3
+    image: rpg-catalog-indexer
+    build: ./indexer
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/bookstack.png
+    ports:
+      - mode: ingress
+        target: 8564
+        published: "8564"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /DATA/storage1/backup/google-drive/sergio/RPG
+        target: /data/rpg
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /DATA/AppData/rpg-catalog/thumbnails
+        target: /data/thumbnails
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /DATA/AppData/rpg-catalog/db
+        target: /data/db
+        bind:
+          create_host_path: true
+    devices: []
+    cap_add: []
+    networks:
+      - rpg_catalog_network
+    privileged: false
 
   rpg-catalog:
-    build: ./catalog-site
-    # image: ghcr.io/sergiojs/rpg-catalog/catalog:latest
+    cpu_shares: 90
+    command: []
     container_name: rpg-catalog
-    restart: unless-stopped
-    ports:
-      - "8160:80"
-    volumes:
-      - thumbnails:/data/thumbnails:ro
     depends_on:
       rpg-indexer:
         condition: service_healthy
+        required: true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    environment: []
+    image: rpg-catalog-site
+    build: ./catalog-site
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/bookstack.png
+    ports:
+      - mode: ingress
+        target: 80
+        published: "8160"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /DATA/AppData/rpg-catalog/thumbnails
+        target: /data/thumbnails
+        read_only: true
+        bind:
+          create_host_path: true
+    devices: []
+    cap_add: []
+    networks:
+      - rpg_catalog_network
+    privileged: false
 
-volumes:
-  thumbnails:
-  indexer-db:
+networks:
+  rpg_catalog_network:
+    name: rpg_catalog_network
+    driver: bridge
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  author: SergioSJS
+  category: Media
+  description:
+    en_us: Personal RPG PDF catalog with automatic indexing, thumbnail generation,
+      full-text search, and LLM-powered tag and summary enrichment (Claude / Gemini / OpenRouter).
+    pt_br: Catálogo pessoal de PDFs de RPG com indexação automática, geração de thumbnails,
+      busca textual e enriquecimento via LLM (Claude / Gemini / OpenRouter).
+  developer: SergioSJS
+  hostname: ""
+  icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/bookstack.png
+  index: /
+  is_uncontrolled: false
+  main: rpg-catalog
+  port_map: "8160"
+  scheme: http
+  store_app_id: rpg-catalog
+  tagline:
+    en_us: Your RPG library, organized and searchable
+    pt_br: Sua biblioteca de RPG, organizada e pesquisável
+  title:
+    custom: ""
+    en_us: RPG Catalog

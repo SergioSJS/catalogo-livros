@@ -25,8 +25,9 @@ def create_app(db_path: str | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Instância compartilhada do DB
+    # Instância compartilhada do DB — inicializa schema na subida
     _db = Database(resolved_db)
+    _db.init_schema()
 
     def get_db() -> Database:
         return _db
