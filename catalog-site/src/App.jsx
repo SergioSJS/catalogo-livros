@@ -15,7 +15,7 @@ export default function App() {
   const [page, setPage] = useState(1)
   const [selectedBook, setSelectedBook] = useState(null)
 
-  const { filters, toggleSystem, toggleCategory, toggleGenre, setLanguage, setSort, reset, toParams } = useFilters()
+  const { filters, toggleSystem, toggleCategory, toggleGenre, setLanguage, setFolder, setSort, reset, toParams } = useFilters()
   const { inputValue, q, setInput, clear } = useSearch()
   const indexer = useIndexer()
 
@@ -35,21 +35,21 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', background: '#fafaf8', fontFamily: 'system-ui, sans-serif' }}>
       {/* Header */}
-      <header style={{ background: '#2d5016', color: '#fff', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 2px 8px rgba(0,0,0,.2)' }}>
-        <h1 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: 22, letterSpacing: 1, flex: 1 }}>
+      <header style={{ background: '#2d5016', color: '#fff', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 2px 8px rgba(0,0,0,.2)' }}>
+        <h1 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: 20, letterSpacing: 1, whiteSpace: 'nowrap' }}>
           📚 RPG Catalog
         </h1>
-        <div style={{ width: 320 }}>
+        <div style={{ flex: 1, maxWidth: 480 }}>
           <SearchBar value={inputValue} onChange={handleSearch} onClear={() => { clear(); setPage(1) }} />
         </div>
-        <div style={{ minWidth: 220 }}>
+        <div style={{ flexShrink: 0 }}>
           <IndexingPanel indexer={indexer} onStart={() => indexer.startIndex()} />
         </div>
       </header>
 
       <div style={{ display: 'flex', gap: 24, padding: 24, maxWidth: 1400, margin: '0 auto' }}>
         {/* Sidebar */}
-        <div style={{ flexShrink: 0 }}>
+        <div style={{ flexShrink: 0, width: 240 }}>
           <FilterSidebar
             facets={facets}
             filters={filters}
@@ -57,6 +57,7 @@ export default function App() {
             onToggleCategory={handleFilterChange(toggleCategory)}
             onToggleGenre={handleFilterChange(toggleGenre)}
             onSetLanguage={handleFilterChange(setLanguage)}
+            onSetFolder={handleFilterChange(setFolder)}
             onReset={() => { reset(); setPage(1) }}
           />
         </div>

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 
 from src.database import Database
 from src.models import BookDetail, BookResponse, FacetsResponse, PaginatedBooks, StatsResponse
@@ -61,6 +62,21 @@ def get_book(file_hash: str, db: Annotated[Database, Depends(_get_db)]):
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     return BookDetail.from_record(book)
+
+
+@router.get("/books/{file_hash}/download")
+def download_book(file_hash: str, db: Annotated[Database, Depends(_get_db)]):
+    book = db.get_book(file_hash)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    import os
+    if not os.path.isfile(book.file_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    return FileResponse(
+        path=book.file_path,
+        media_type="application/pdf",
+        filename=book.filename,
+    )
 
 
 @router.get("/facets")
