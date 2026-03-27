@@ -58,7 +58,38 @@ def run_indexing_job(job_id: str, db_path: str, config_path: str, force: bool, f
             cfg.sources = [s for s in cfg.sources if s.path in folders]
 
         db = Database(db_path)
-        pipeline = IndexingPipeline(config=cfg, db=db)
+        if force:
+            db.clear_scan_log()  # força reprocessamento de todos os arquivos
+
+        # ── Constrói EnrichmentService se LLM habilitado ──────────────────────
+        enrichment_service = None
+        if cfg.llm.enabled and cfg.llm.providers:
+            from src.enrichment import EnrichmentService
+            from src.llm.router import LLMRouter
+            from src.llm.anthropic import AnthropicProvider
+            from src.llm.openrouter import OpenRouterProvider
+            from src.llm.google import GoogleProvider
+
+            _provider_classes = {
+                "anthropic": AnthropicProvider,
+                "openrouter": OpenRouterProvider,
+                "google": GoogleProvider,
+            }
+            built_providers = []
+            for p in cfg.llm.providers:
+                cls = _provider_classes.get(p.type)
+                if cls:
+                    built_providers.append(cls(name=p.name, model=p.model, tasks=p.tasks, env_key=p.env_key))
+
+            router = LLMRouter(providers=built_providers)
+            taxonomy = {
+                "systems": cfg.tag_taxonomy.systems,
+                "categories": cfg.tag_taxonomy.categories,
+                "genres": cfg.tag_taxonomy.genres,
+            }
+            enrichment_service = EnrichmentService(router=router, taxonomy=taxonomy)
+
+        pipeline = IndexingPipeline(config=cfg, db=db, enrichment_service=enrichment_service)
 
         def progress_cb(update: dict) -> None:
             with _lock:

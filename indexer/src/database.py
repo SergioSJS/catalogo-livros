@@ -171,6 +171,10 @@ class Database:
                     conn.execute("DELETE FROM books WHERE file_path=?", (path,))
                 conn.execute("DELETE FROM scan_log WHERE file_path=?", (path,))
 
+    def clear_scan_log(self) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM scan_log")
+
     def update_scan_log(self, entry: ScanEntry) -> None:
         with self._connect() as conn:
             conn.execute("""
