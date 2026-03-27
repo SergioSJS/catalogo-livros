@@ -22,7 +22,7 @@ services:
       timeout: 5s
       interval: 30s
       retries: 3
-    image: rpg-catalog-indexer
+    image: ghcr.io/sergiojs/catalogo-livros/indexer:latest
     build: ./indexer
     labels:
       icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/bookstack.png
@@ -68,7 +68,7 @@ services:
         limits:
           memory: 256M
     environment: []
-    image: rpg-catalog-site
+    image: ghcr.io/sergiojs/catalogo-livros/catalog:latest
     build: ./catalog-site
     labels:
       icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/bookstack.png
