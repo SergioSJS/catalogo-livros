@@ -2,9 +2,10 @@ name: Test Indexer
 
 on:
   push:
-    paths: ['indexer/**']
+    paths: ['indexer/**', '.github/workflows/test-indexer.yml']
   pull_request:
-    paths: ['indexer/**']
+    paths: ['indexer/**', '.github/workflows/test-indexer.yml']
+  workflow_dispatch:
 
 jobs:
   test:
