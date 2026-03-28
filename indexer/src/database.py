@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -140,6 +141,36 @@ class Database:
                 book.llm_provider, book.llm_confidence,
                 book.indexed_at, book.updated_at,
             ))
+
+    def update_enrichment(self, file_hash: str, summary: str | None,
+                          system_tags: list, category_tags: list,
+                          genre_tags: list, custom_tags: list,
+                          llm_provider: str | None, llm_confidence: float | None) -> None:
+        """Atualiza apenas os campos de enriquecimento LLM de um livro existente."""
+        with self._connect() as conn:
+            conn.execute("""
+                UPDATE books SET
+                    summary=?, system_tags=?, category_tags=?, genre_tags=?,
+                    custom_tags=?, llm_provider=?, llm_confidence=?, updated_at=?
+                WHERE file_hash=?
+            """, (
+                summary,
+                json.dumps(system_tags), json.dumps(category_tags),
+                json.dumps(genre_tags), json.dumps(custom_tags),
+                llm_provider, llm_confidence,
+                datetime.now(timezone.utc).isoformat(),
+                file_hash,
+            ))
+
+    def get_hashes_needing_enrichment(self) -> set[str]:
+        """Retorna file_hashes de livros sem summary e sem system_tags."""
+        with self._connect() as conn:
+            rows = conn.execute("""
+                SELECT file_hash FROM books
+                WHERE (summary IS NULL OR summary = '')
+                AND system_tags = '[]'
+            """).fetchall()
+        return {row[0] for row in rows}
 
     def get_book(self, file_hash: str) -> BookRecord | None:
         with self._connect() as conn:

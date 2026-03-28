@@ -71,10 +71,43 @@ class IndexingPipeline:
         thumbs_dir = Path(cfg.thumbnails_dir)
         thumbs_dir.mkdir(parents=True, exist_ok=True)
 
+        # Hashes já indexados mas sem enriquecimento LLM
+        needs_enrichment = (
+            self.db.get_hashes_needing_enrichment()
+            if self._enrichment is not None and self.config.llm.enabled
+            else set()
+        )
+
         for i, scan in enumerate(all_scan_results):
             if scan.is_unchanged:
-                result.skipped += 1
-                _update({"processed": i + 1, "skipped": result.skipped})
+                # Enriquece pendentes sem re-extrair PDF completo
+                if scan.file_hash in needs_enrichment:
+                    _update({"phase": "enriching", "current_file": scan.relative_path, "processed": i + 1})
+                    try:
+                        language = getattr(scan, "_source_language", "en")
+                        text_sample = extract_text_sample(scan.file_path, self.config.indexing.llm_sample_pages)
+                        enriched = asyncio.run(
+                            self._enrichment.enrich(text=text_sample, language=language)
+                        )
+                        self.db.update_enrichment(
+                            file_hash=scan.file_hash,
+                            summary=enriched.summary or None,
+                            system_tags=enriched.system_tags,
+                            category_tags=enriched.category_tags,
+                            genre_tags=enriched.genre_tags,
+                            custom_tags=enriched.custom_tags,
+                            llm_provider=enriched.llm_provider,
+                            llm_confidence=enriched.confidence,
+                        )
+                        result.new_indexed += 1
+                        _update({"new_files": result.new_indexed})
+                    except Exception as exc:
+                        result.errors += 1
+                        result.error_log.append({"file": scan.relative_path, "error": str(exc)})
+                        _update({"errors": result.errors})
+                else:
+                    result.skipped += 1
+                    _update({"processed": i + 1, "skipped": result.skipped})
                 continue
 
             _update({"current_file": scan.relative_path, "processed": i + 1})

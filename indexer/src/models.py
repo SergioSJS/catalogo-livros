@@ -78,6 +78,7 @@ class BookResponse(BaseModel):
     file_hash: str
     title: str
     filename: str
+    relative_path: str
     parent_folder: str
     language: str
     file_size: int
@@ -99,6 +100,7 @@ class BookResponse(BaseModel):
             file_hash=book.file_hash,
             title=book.title,
             filename=book.filename,
+            relative_path=book.relative_path,
             parent_folder=book.parent_folder,
             language=book.language,
             file_size=book.file_size,
