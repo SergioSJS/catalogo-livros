@@ -86,6 +86,32 @@ async def test_summarize_raises_on_http_error(provider):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_summary_prompt_forbids_markdown(provider):
+    import json
+    route = respx.post("https://api.anthropic.com/v1/messages").mock(
+        return_value=httpx.Response(200, json={"content": [{"type": "text", "text": "A summary."}]})
+    )
+    await provider.summarize_book(text="text", language="pt")
+    body = json.loads(route.calls.last.request.content)
+    prompt = body["messages"][0]["content"]
+    assert "markdown" in prompt.lower() or "plain text" in prompt.lower()
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_tag_prompt_instructs_same_language_for_extra_tags(provider):
+    import json
+    route = respx.post("https://api.anthropic.com/v1/messages").mock(
+        return_value=httpx.Response(200, json={"content": [{"type": "text", "text": '{"system": "OSR", "category": "Core Rulebook", "genre": "Fantasy", "extra_tags": [], "confidence": 0.8}'}]})
+    )
+    await provider.tag_book(text="text", taxonomy={"systems": ["OSR"], "categories": ["Core Rulebook"], "genres": ["Fantasy"]})
+    body = json.loads(route.calls.last.request.content)
+    prompt = body["messages"][0]["content"]
+    assert "brazilian portuguese" in prompt.lower()
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_tag_book_returns_tag_result(provider):
     """AnthropicProvider agora implementa tagging via JSON response."""
     respx.post("https://api.anthropic.com/v1/messages").mock(

@@ -122,6 +122,32 @@ async def test_summarize_book(provider):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_summary_prompt_forbids_markdown(provider):
+    import json
+    route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(200, json={"choices": [{"message": {"content": "A summary."}}]})
+    )
+    await provider.summarize_book(text="text", language="pt")
+    body = json.loads(route.calls.last.request.content)
+    prompt = body["messages"][0]["content"]
+    assert "markdown" in prompt.lower() or "plain text" in prompt.lower()
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_tag_prompt_instructs_same_language_for_extra_tags(provider):
+    import json
+    route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
+        return_value=httpx.Response(200, json={"choices": [{"message": {"content": VALID_TAG_RESPONSE}}]})
+    )
+    await provider.tag_book(text="text", taxonomy=TAXONOMY)
+    body = json.loads(route.calls.last.request.content)
+    prompt = body["messages"][0]["content"]
+    assert "brazilian portuguese" in prompt.lower()
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_model_is_sent_in_request(provider):
     route = respx.post("https://openrouter.ai/api/v1/chat/completions").mock(
         return_value=httpx.Response(200, json={

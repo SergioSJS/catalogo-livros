@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 
 from src.database import Database
-from src.models import BookDetail, BookResponse, FacetsResponse, PaginatedBooks, StatsResponse
+from src.models import BookDetail, BookResponse, FacetsResponse, PaginatedBooks, StatsResponse, PersonalFieldsUpdate
 
 router = APIRouter(prefix="/api")
 
@@ -95,6 +95,22 @@ def get_facets(
         genres=genre or None,
         folder=folder,
     )
+
+
+@router.patch("/books/{file_hash}/personal", response_model=BookResponse)
+def update_personal_fields(
+    file_hash: str,
+    body: PersonalFieldsUpdate,
+    db: Annotated[Database, Depends(_get_db)],
+):
+    book = db.get_book(file_hash)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    db.update_personal_fields(
+        file_hash,
+        **{k: v for k, v in body.model_dump().items() if v is not None},
+    )
+    return BookResponse.from_record(db.get_book(file_hash))
 
 
 @router.get("/stats")

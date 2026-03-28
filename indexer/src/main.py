@@ -31,6 +31,7 @@ def create_app(db_path: str | None = None) -> FastAPI:
     # Instância compartilhada do DB — inicializa schema na subida
     _db = Database(resolved_db)
     _db.init_schema()
+    _db.migrate_schema()
 
     def get_db() -> Database:
         return _db

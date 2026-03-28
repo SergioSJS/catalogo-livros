@@ -143,3 +143,51 @@ def test_health(seeded_client):
     r = seeded_client.get("/api/health")
     assert r.status_code == 200
     assert r.json()["status"] == "ok"
+
+
+# ── PATCH /api/books/{hash}/personal ─────────────────────────────────────────
+
+def test_patch_personal_fields(seeded_client):
+    r = seeded_client.patch("/api/books/hash_a/personal", json={"read_status": "read", "score": 5})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["read_status"] == "read"
+    assert data["score"] == 5
+
+
+def test_patch_personal_fields_partial(seeded_client):
+    seeded_client.patch("/api/books/hash_a/personal", json={"score": 3})
+    r = seeded_client.get("/api/books/hash_a")
+    assert r.json()["score"] == 3
+    assert r.json()["read_status"] == "unread"  # default mantido
+
+
+def test_patch_personal_fields_not_found(seeded_client):
+    r = seeded_client.patch("/api/books/nonexistent/personal", json={"score": 3})
+    assert r.status_code == 404
+
+
+def test_patch_personal_fields_invalid_status(seeded_client):
+    r = seeded_client.patch("/api/books/hash_a/personal", json={"read_status": "bad_value"})
+    assert r.status_code == 422
+
+
+def test_patch_personal_fields_score_out_of_range(seeded_client):
+    r = seeded_client.patch("/api/books/hash_a/personal", json={"score": 6})
+    assert r.status_code == 422
+
+
+def test_patch_personal_fields_all_fields(seeded_client):
+    payload = {
+        "read_status": "read",
+        "played_status": "played",
+        "solo_friendly": True,
+        "review": "Excelente jogo!",
+        "score": 5,
+    }
+    r = seeded_client.patch("/api/books/hash_a/personal", json=payload)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["played_status"] == "played"
+    assert data["solo_friendly"] is True
+    assert data["review"] == "Excelente jogo!"

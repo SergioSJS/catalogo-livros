@@ -6,7 +6,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Literal
 
 
 # ── Dataclasses internas ──────────────────────────────────────────────────────
@@ -32,6 +33,12 @@ class BookRecord:
     llm_confidence: float | None = None
     indexed_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    # Campos pessoais
+    read_status: str = "unread"
+    played_status: str = "unplayed"
+    solo_friendly: bool = False
+    review: str | None = None
+    score: int | None = None
 
 
 @dataclass
@@ -92,6 +99,12 @@ class BookResponse(BaseModel):
     custom_tags: list[str]
     llm_confidence: float | None
     indexed_at: str
+    # Campos pessoais
+    read_status: str
+    played_status: str
+    solo_friendly: bool
+    review: str | None
+    score: int | None
 
     @classmethod
     def from_record(cls, book: BookRecord) -> "BookResponse":
@@ -114,6 +127,11 @@ class BookResponse(BaseModel):
             custom_tags=book.custom_tags,
             llm_confidence=book.llm_confidence,
             indexed_at=book.indexed_at,
+            read_status=book.read_status,
+            played_status=book.played_status,
+            solo_friendly=book.solo_friendly,
+            review=book.review,
+            score=book.score,
         )
 
 
@@ -145,6 +163,11 @@ class BookDetail(BookResponse):
             llm_confidence=book.llm_confidence,
             indexed_at=book.indexed_at,
             updated_at=book.updated_at,
+            read_status=book.read_status,
+            played_status=book.played_status,
+            solo_friendly=book.solo_friendly,
+            review=book.review,
+            score=book.score,
         )
 
 
@@ -189,6 +212,14 @@ class StatsResponse(BaseModel):
     by_category: list[FacetItem]
     oldest_indexed: str | None
     newest_indexed: str | None
+
+
+class PersonalFieldsUpdate(BaseModel):
+    read_status: Literal["unread", "reading", "read"] | None = None
+    played_status: Literal["unplayed", "playing", "played"] | None = None
+    solo_friendly: bool | None = None
+    review: str | None = None
+    score: int | None = Field(default=None, ge=1, le=5)
 
 
 class IndexStatusResponse(BaseModel):

@@ -177,3 +177,65 @@ def test_get_stats(seeded_db):
     assert stats["total_books"] == 4
     assert stats["by_language"]["en"] == 2
     assert stats["by_language"]["pt"] == 2
+
+
+# ── Campos pessoais ───────────────────────────────────────────────────────────
+
+def test_schema_has_personal_fields(db):
+    cols = {row[1] for row in db.execute("PRAGMA table_info(books)").fetchall()}
+    assert "read_status" in cols
+    assert "played_status" in cols
+    assert "solo_friendly" in cols
+    assert "review" in cols
+    assert "score" in cols
+
+
+def test_migrate_schema_adds_personal_fields(tmp_path):
+    """migrate_schema() deve funcionar em DB sem as colunas pessoais."""
+    import sqlite3
+    db_path = str(tmp_path / "old.db")
+    # Cria DB antigo sem as colunas
+    conn = sqlite3.connect(db_path)
+    conn.execute("""CREATE TABLE books (
+        file_hash TEXT PRIMARY KEY, file_path TEXT NOT NULL,
+        relative_path TEXT NOT NULL, filename TEXT NOT NULL,
+        parent_folder TEXT NOT NULL, title TEXT NOT NULL,
+        language TEXT DEFAULT 'en', file_size INTEGER DEFAULT 0,
+        page_count INTEGER DEFAULT 0, thumbnail_file TEXT,
+        summary TEXT, system_tags TEXT DEFAULT '[]',
+        category_tags TEXT DEFAULT '[]', genre_tags TEXT DEFAULT '[]',
+        custom_tags TEXT DEFAULT '[]', llm_provider TEXT,
+        llm_confidence REAL, indexed_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    )""")
+    conn.commit()
+    conn.close()
+
+    db = Database(db_path)
+    db.migrate_schema()
+    cols = {row[1] for row in db.execute("PRAGMA table_info(books)").fetchall()}
+    assert "read_status" in cols
+    assert "score" in cols
+
+
+def test_update_personal_fields(db):
+    book = make_book("a")
+    db.upsert_book(book)
+    db.update_personal_fields("hash_a", read_status="read", score=4, review="Muito bom!")
+    row = db.get_book("hash_a")
+    assert row.read_status == "read"
+    assert row.score == 4
+    assert row.review == "Muito bom!"
+
+
+def test_update_personal_fields_partial(db):
+    book = make_book("a")
+    db.upsert_book(book)
+    db.update_personal_fields("hash_a", read_status="reading")
+    row = db.get_book("hash_a")
+    assert row.read_status == "reading"
+    assert row.score is None  # não foi alterado
+
+
+def test_update_personal_fields_unknown_hash_no_error(db):
+    # Não deve lançar exceção para hash inexistente
+    db.update_personal_fields("nonexistent", read_status="read")

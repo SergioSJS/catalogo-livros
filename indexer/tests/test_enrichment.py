@@ -71,6 +71,12 @@ def test_build_tag_prompt_contains_taxonomy():
     assert "Fantasy" in prompt
 
 
+def test_build_tag_prompt_instructs_same_language_for_extra_tags():
+    svc = EnrichmentService(router=MagicMock(), taxonomy=TAXONOMY)
+    prompt = svc.build_tag_prompt(text=SAMPLE_TEXT)
+    assert "brazilian portuguese" in prompt.lower()
+
+
 def test_parse_json_response_tolerates_markdown():
     svc = EnrichmentService(router=MagicMock(), taxonomy=TAXONOMY)
     raw = '```json\n{"system": "Mausritter", "category": "Core Rulebook", "genre": "Fantasy", "extra_tags": ["rules-light"], "confidence": 0.9}\n```'

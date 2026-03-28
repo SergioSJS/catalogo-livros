@@ -19,7 +19,7 @@ Given the text from the first pages, return ONLY valid JSON:
   "system": "one of: {systems}",
   "category": "one of: {categories}",
   "genre": "one of: {genres}",
-  "extra_tags": ["up to 5 freeform tags"],
+  "extra_tags": ["up to 5 freeform tags in Brazilian Portuguese"],
   "confidence": 0.0
 }}
 

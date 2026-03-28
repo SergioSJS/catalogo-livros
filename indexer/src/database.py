@@ -63,7 +63,12 @@ class Database:
                     llm_provider    TEXT,
                     llm_confidence  REAL,
                     indexed_at      TEXT NOT NULL,
-                    updated_at      TEXT NOT NULL
+                    updated_at      TEXT NOT NULL,
+                    read_status     TEXT DEFAULT 'unread',
+                    played_status   TEXT DEFAULT 'unplayed',
+                    solo_friendly   INTEGER DEFAULT 0,
+                    review          TEXT,
+                    score           INTEGER
                 );
 
                 CREATE INDEX IF NOT EXISTS idx_books_language ON books(language);
@@ -102,6 +107,21 @@ class Database:
                     error_log       TEXT DEFAULT '[]'
                 );
             """)
+
+    def migrate_schema(self) -> None:
+        """Adiciona colunas novas a DBs existentes sem as colunas pessoais."""
+        migrations = [
+            ("read_status",   "TEXT DEFAULT 'unread'"),
+            ("played_status", "TEXT DEFAULT 'unplayed'"),
+            ("solo_friendly", "INTEGER DEFAULT 0"),
+            ("review",        "TEXT"),
+            ("score",         "INTEGER"),
+        ]
+        with self._connect() as conn:
+            existing = {row[1] for row in conn.execute("PRAGMA table_info(books)").fetchall()}
+            for col, col_def in migrations:
+                if col not in existing:
+                    conn.execute(f"ALTER TABLE books ADD COLUMN {col} {col_def}")
 
     # ── CRUD ──────────────────────────────────────────────────────────────────
 
@@ -201,6 +221,20 @@ class Database:
                     conn.execute("DELETE FROM books_fts WHERE file_hash=?", (row[0],))
                     conn.execute("DELETE FROM books WHERE file_path=?", (path,))
                 conn.execute("DELETE FROM scan_log WHERE file_path=?", (path,))
+
+    def update_personal_fields(self, file_hash: str, **kwargs) -> None:
+        """Atualiza campos pessoais (read_status, played_status, solo_friendly, review, score)."""
+        allowed = {"read_status", "played_status", "solo_friendly", "review", "score"}
+        fields = {k: v for k, v in kwargs.items() if k in allowed and v is not None}
+        if not fields:
+            return
+        fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+        set_clause = ", ".join(f"{k}=?" for k in fields)
+        with self._connect() as conn:
+            conn.execute(
+                f"UPDATE books SET {set_clause} WHERE file_hash=?",
+                (*fields.values(), file_hash),
+            )
 
     def clear_scan_log(self) -> None:
         with self._connect() as conn:
@@ -483,4 +517,9 @@ def _row_to_book(row: sqlite3.Row) -> BookRecord:
         llm_confidence=row["llm_confidence"],
         indexed_at=row["indexed_at"],
         updated_at=row["updated_at"],
+        read_status=row["read_status"] or "unread",
+        played_status=row["played_status"] or "unplayed",
+        solo_friendly=bool(row["solo_friendly"]),
+        review=row["review"],
+        score=row["score"],
     )

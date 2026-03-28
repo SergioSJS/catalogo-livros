@@ -20,7 +20,7 @@ Given the text from the first pages, return ONLY valid JSON:
   "system": "one of: {systems}",
   "category": "one of: {categories}",
   "genre": "one of: {genres}",
-  "extra_tags": ["up to 5 freeform tags"],
+  "extra_tags": ["up to 5 freeform tags in Brazilian Portuguese"],
   "confidence": 0.0
 }}
 
@@ -33,6 +33,7 @@ _SUMMARY_PROMPT = """\
 Write a 2-3 sentence summary of this RPG book in {language}.
 Be specific: setting, mechanics, theme.
 Only describe what's evident from the text.
+Do not use markdown, bullet points or headings. Plain text only.
 
 Text from first pages:
 ---
