@@ -1,5 +1,14 @@
 const LANG_LABEL = { en: 'English', pt: 'Português' }
 
+function stripMarkdown(text) {
+  if (!text) return text
+  return text
+    .replace(/^#+\s+.+\n?/gm, '')   // remove headings like "# Summary"
+    .replace(/\*\*(.+?)\*\*/g, '$1') // remove bold
+    .replace(/\*(.+?)\*/g, '$1')     // remove italic
+    .trim()
+}
+
 export function BookModal({ book, onClose }) {
   if (!book) return null
 
@@ -49,7 +58,7 @@ export function BookModal({ book, onClose }) {
         </div>
 
         {summary && (
-          <p style={{ color: '#444', lineHeight: 1.7, marginBottom: 16, fontSize: 14 }}>{summary}</p>
+          <p style={{ color: '#444', lineHeight: 1.7, marginBottom: 16, fontSize: 14 }}>{stripMarkdown(summary)}</p>
         )}
 
         {/* Meta */}

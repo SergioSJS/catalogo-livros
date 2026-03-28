@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { fetchFacets } from '../api/client.js'
 
 export function useFacets(filters = {}) {
-  const [facets, setFacets] = useState({ systems: [], categories: [], genres: [], tags: [] })
+  const [facets, setFacets] = useState({ languages: [], systems: [], categories: [], genres: [], folders: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -18,7 +18,7 @@ export function useFacets(filters = {}) {
       })
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.language])
+  }, [JSON.stringify(filters)])
 
   return { facets, loading, error }
 }

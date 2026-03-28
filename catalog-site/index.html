@@ -10,6 +10,23 @@
     *, *::before, *::after { box-sizing: border-box; }
     body { margin: 0; font-family: 'Source Sans 3', system-ui, sans-serif; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    .layout-body { display: flex; gap: 24px; padding: 16px 24px; max-width: 1400px; margin: 0 auto; }
+    .sidebar-col { width: 240px; flex-shrink: 0; }
+    .main-col { flex: 1; min-width: 0; }
+    .filter-toggle-btn { display: none; }
+
+    @media (max-width: 768px) {
+      .layout-body { padding: 12px 12px; }
+      .sidebar-col { display: none; }
+      .filter-toggle-btn {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,.2); color: #fff; border: 1px solid rgba(255,255,255,.4);
+        border-radius: 8px; padding: 7px 12px; font-size: 13px; cursor: pointer; white-space: nowrap;
+      }
+      .book-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    }
   </style>
 </head>
 <body>

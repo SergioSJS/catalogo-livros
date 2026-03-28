@@ -9,7 +9,7 @@ function SkeletonCard() {
 export function BookGrid({ books, loading, onSelect }) {
   if (loading) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
+      <div className="book-grid">
         {Array.from({ length: 12 }, (_, i) => <SkeletonCard key={i} />)}
       </div>
     )
@@ -24,7 +24,7 @@ export function BookGrid({ books, loading, onSelect }) {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
+    <div className="book-grid">
       {books.map(book => (
         <BookCard key={book.file_hash} book={book} onSelect={onSelect} />
       ))}

@@ -83,8 +83,18 @@ def download_book(file_hash: str, db: Annotated[Database, Depends(_get_db)]):
 def get_facets(
     db: Annotated[Database, Depends(_get_db)],
     language: str | None = Query(None),
+    system: list[str] = Query(default=[]),
+    category: list[str] = Query(default=[]),
+    genre: list[str] = Query(default=[]),
+    folder: str | None = Query(None),
 ):
-    return db.get_facets(language=language)
+    return db.get_facets(
+        language=language,
+        systems=system or None,
+        categories=category or None,
+        genres=genre or None,
+        folder=folder,
+    )
 
 
 @router.get("/stats")

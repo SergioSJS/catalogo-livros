@@ -11,9 +11,19 @@ import { SearchBar } from './components/SearchBar.jsx'
 import { Pagination } from './components/Pagination.jsx'
 import { IndexingPanel } from './components/IndexingPanel.jsx'
 
+const SORT_OPTIONS = [
+  { value: 'title_asc', label: 'Title A–Z' },
+  { value: 'title_desc', label: 'Title Z–A' },
+  { value: 'pages_desc', label: 'Most pages' },
+  { value: 'pages_asc', label: 'Fewest pages' },
+  { value: 'size_desc', label: 'Largest file' },
+  { value: 'newest', label: 'Recently indexed' },
+]
+
 export default function App() {
   const [page, setPage] = useState(1)
   const [selectedBook, setSelectedBook] = useState(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const { filters, toggleSystem, toggleCategory, toggleGenre, setLanguage, setFolder, setSort, reset, toParams } = useFilters()
   const { inputValue, q, setInput, clear } = useSearch()
@@ -21,25 +31,44 @@ export default function App() {
 
   const queryParams = { ...toParams(), q, page }
   const { items, pagination, loading } = useBooks(queryParams)
-  const { facets } = useFacets({ language: filters.language })
+  const { facets } = useFacets({
+    language: filters.language,
+    systems: filters.systems,
+    categories: filters.categories,
+    genres: filters.genres,
+    folder: filters.folder,
+  })
 
-  function handleSearch(val) {
-    setInput(val)
-    setPage(1)
-  }
-
+  function handleSearch(val) { setInput(val); setPage(1) }
   function handleFilterChange(fn) {
     return (...args) => { fn(...args); setPage(1) }
   }
 
+  const sidebarProps = {
+    facets,
+    filters,
+    onToggleSystem: handleFilterChange(toggleSystem),
+    onToggleCategory: handleFilterChange(toggleCategory),
+    onToggleGenre: handleFilterChange(toggleGenre),
+    onSetLanguage: handleFilterChange(setLanguage),
+    onSetFolder: handleFilterChange(setFolder),
+    onReset: () => { reset(); setPage(1) },
+  }
+
   return (
-    <div style={{ minHeight: '100vh', background: '#fafaf8', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#fafaf8' }}>
       {/* Header */}
-      <header style={{ background: '#2d5016', color: '#fff', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 2px 8px rgba(0,0,0,.2)' }}>
-        <h1 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: 20, letterSpacing: 1, whiteSpace: 'nowrap' }}>
+      <header style={{ background: '#2d5016', color: '#fff', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 2px 8px rgba(0,0,0,.25)' }}>
+        <h1 style={{ margin: 0, fontFamily: 'Cinzel, Georgia, serif', fontSize: 18, whiteSpace: 'nowrap', letterSpacing: 1 }}>
           📚 RPG Catalog
         </h1>
-        <div style={{ flex: 1, maxWidth: 480 }}>
+
+        {/* Filter toggle — mobile only */}
+        <button className="filter-toggle-btn" onClick={() => setDrawerOpen(true)}>
+          ☰ Filters
+        </button>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
           <SearchBar value={inputValue} onChange={handleSearch} onClear={() => { clear(); setPage(1) }} />
         </div>
         <div style={{ flexShrink: 0 }}>
@@ -47,28 +76,44 @@ export default function App() {
         </div>
       </header>
 
-      <div style={{ display: 'flex', gap: 24, padding: 24, maxWidth: 1400, margin: '0 auto' }}>
-        {/* Sidebar */}
-        <div style={{ flexShrink: 0, width: 240 }}>
-          <FilterSidebar
-            facets={facets}
-            filters={filters}
-            onToggleSystem={handleFilterChange(toggleSystem)}
-            onToggleCategory={handleFilterChange(toggleCategory)}
-            onToggleGenre={handleFilterChange(toggleGenre)}
-            onSetLanguage={handleFilterChange(setLanguage)}
-            onSetFolder={handleFilterChange(setFolder)}
-            onReset={() => { reset(); setPage(1) }}
-          />
+      {/* Mobile drawer */}
+      {drawerOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 200 }} onClick={() => setDrawerOpen(false)}>
+          <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 300, background: '#fff', padding: '16px', overflowY: 'auto', boxShadow: '4px 0 24px rgba(0,0,0,.2)' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <span style={{ fontWeight: 700, fontSize: 15 }}>Filters</span>
+              <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#666' }}>×</button>
+            </div>
+            <FilterSidebar {...sidebarProps} />
+          </div>
+        </div>
+      )}
+
+      <div className="layout-body">
+        {/* Sidebar desktop */}
+        <div className="sidebar-col">
+          <FilterSidebar {...sidebarProps} />
         </div>
 
         {/* Main */}
-        <main style={{ flex: 1, minWidth: 0 }}>
-          {pagination && (
-            <p style={{ margin: '0 0 12px', fontSize: 13, color: '#888' }}>
-              {pagination.total_items} books found
-            </p>
-          )}
+        <main className="main-col">
+          {/* Toolbar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: '#888' }}>
+              {pagination ? `${pagination.total_items} books found` : '…'}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <label style={{ fontSize: 13, color: '#666' }}>Sort:</label>
+              <select
+                value={filters.sort}
+                onChange={e => { setSort(e.target.value); setPage(1) }}
+                style={{ fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', cursor: 'pointer' }}
+              >
+                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
 
           <BookGrid books={items} loading={loading} onSelect={setSelectedBook} />
 

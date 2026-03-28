@@ -2,9 +2,9 @@ export function FilterSidebar({ facets, filters, onToggleSystem, onToggleCategor
   const hasActiveFilters = filters.systems.length > 0 || filters.categories.length > 0 || filters.genres.length > 0 || filters.language || filters.folder
 
   return (
-    <aside style={{ minWidth: 220, maxWidth: 240 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: '#2d5016' }}>Filters</h3>
+    <aside>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: '#2d5016' }}>Filters</h3>
         {hasActiveFilters && (
           <button onClick={onReset} aria-label="Reset filters" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#c5913e', textDecoration: 'underline' }}>Reset</button>
         )}

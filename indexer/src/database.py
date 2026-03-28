@@ -300,12 +300,34 @@ class Database:
 
         return [_row_to_book(r) for r in rows], total
 
-    def get_facets(self, language: str | None = None) -> dict:
-        lang_filter = "WHERE language = ?" if language else ""
-        lang_params = (language,) if language else ()
+    def get_facets(self, language: str | None = None,
+                   systems: list[str] | None = None,
+                   categories: list[str] | None = None,
+                   genres: list[str] | None = None,
+                   folder: str | None = None) -> dict:
+        # Build shared WHERE conditions
+        conditions: list[str] = []
+        params: list[Any] = []
+        if language:
+            conditions.append("language = ?")
+            params.append(language)
+        for s in (systems or []):
+            conditions.append("EXISTS (SELECT 1 FROM json_each(books.system_tags) WHERE json_each.value = ?)")
+            params.append(s)
+        for c in (categories or []):
+            conditions.append("EXISTS (SELECT 1 FROM json_each(books.category_tags) WHERE json_each.value = ?)")
+            params.append(c)
+        for g in (genres or []):
+            conditions.append("EXISTS (SELECT 1 FROM json_each(books.genre_tags) WHERE json_each.value = ?)")
+            params.append(g)
+        if folder:
+            conditions.append("parent_folder = ?")
+            params.append(folder)
+
+        where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
         with self._connect() as conn:
-            # Languages (sempre total)
+            # Languages (sempre total, sem filtros)
             lang_rows = conn.execute(
                 "SELECT language, COUNT(*) as cnt FROM books GROUP BY language ORDER BY cnt DESC"
             ).fetchall()
@@ -318,43 +340,43 @@ class Database:
             sys_rows = conn.execute(f"""
                 SELECT json_each.value as val, COUNT(*) as cnt
                 FROM books, json_each(books.system_tags)
-                {lang_filter}
+                {where}
                 GROUP BY val ORDER BY cnt DESC
-            """, lang_params).fetchall()
-            systems = [{"value": r["val"], "count": r["cnt"]} for r in sys_rows]
+            """, params).fetchall()
+            systems_out = [{"value": r["val"], "count": r["cnt"]} for r in sys_rows]
 
             # Categories
             cat_rows = conn.execute(f"""
                 SELECT json_each.value as val, COUNT(*) as cnt
                 FROM books, json_each(books.category_tags)
-                {lang_filter}
+                {where}
                 GROUP BY val ORDER BY cnt DESC
-            """, lang_params).fetchall()
-            categories = [{"value": r["val"], "count": r["cnt"]} for r in cat_rows]
+            """, params).fetchall()
+            categories_out = [{"value": r["val"], "count": r["cnt"]} for r in cat_rows]
 
             # Genres
             gen_rows = conn.execute(f"""
                 SELECT json_each.value as val, COUNT(*) as cnt
                 FROM books, json_each(books.genre_tags)
-                {lang_filter}
+                {where}
                 GROUP BY val ORDER BY cnt DESC
-            """, lang_params).fetchall()
-            genres = [{"value": r["val"], "count": r["cnt"]} for r in gen_rows]
+            """, params).fetchall()
+            genres_out = [{"value": r["val"], "count": r["cnt"]} for r in gen_rows]
 
             # Folders
             fol_rows = conn.execute(f"""
                 SELECT parent_folder as val, COUNT(*) as cnt
-                FROM books {lang_filter}
+                FROM books {where}
                 GROUP BY parent_folder ORDER BY cnt DESC
-            """, lang_params).fetchall()
-            folders = [{"value": r["val"], "count": r["cnt"]} for r in fol_rows]
+            """, params).fetchall()
+            folders_out = [{"value": r["val"], "count": r["cnt"]} for r in fol_rows]
 
         return {
             "languages": languages,
-            "systems": systems,
-            "categories": categories,
-            "genres": genres,
-            "folders": folders,
+            "systems": systems_out,
+            "categories": categories_out,
+            "genres": genres_out,
+            "folders": folders_out,
         }
 
     def get_stats(self) -> dict:

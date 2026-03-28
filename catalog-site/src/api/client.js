@@ -53,9 +53,13 @@ export function fetchBook(hash) {
   return apiFetch(`/api/books/${hash}`)
 }
 
-export function fetchFacets({ language } = {}) {
+export function fetchFacets({ language, systems = [], categories = [], genres = [], folder } = {}) {
   const url = new URL('/api/facets', window?.location?.origin ?? 'http://localhost')
   if (language) url.searchParams.set('language', language)
+  if (folder) url.searchParams.set('folder', folder)
+  systems.forEach(s => url.searchParams.append('system', s))
+  categories.forEach(c => url.searchParams.append('category', c))
+  genres.forEach(g => url.searchParams.append('genre', g))
   return apiFetch(url.pathname + url.search)
 }
 
