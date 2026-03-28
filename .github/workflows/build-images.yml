@@ -29,8 +29,8 @@ jobs:
           context: ./indexer
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/indexer:latest
-            ghcr.io/${{ github.repository }}/indexer:${{ github.sha }}
+            ghcr.io/sergiojs/catalogo-livros/indexer:latest
+            ghcr.io/sergiojs/catalogo-livros/indexer:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -40,7 +40,7 @@ jobs:
           context: ./catalog-site
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/catalog:latest
-            ghcr.io/${{ github.repository }}/catalog:${{ github.sha }}
+            ghcr.io/sergiojs/catalogo-livros/catalog:latest
+            ghcr.io/sergiojs/catalogo-livros/catalog:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
