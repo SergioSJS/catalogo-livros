@@ -7,7 +7,7 @@ const book = {
   title: 'Mausritter',
   filename: 'mausritter.pdf',
   relative_path: 'EN/OSR/Mausritter/mausritter.pdf',
-  parent_folder: 'Mausritter',
+  parent_folder: 'Adventure',
   language: 'en',
   page_count: 48,
   file_size_human: '2.1 MB',

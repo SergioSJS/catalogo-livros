@@ -56,59 +56,54 @@ export default function App() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fafaf8' }}>
-      {/* Header */}
-      <header style={{ background: '#2d5016', color: '#fff', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 2px 8px rgba(0,0,0,.25)' }}>
-        <h1 style={{ margin: 0, fontFamily: 'Cinzel, Georgia, serif', fontSize: 18, whiteSpace: 'nowrap', letterSpacing: 1 }}>
-          📚 RPG Catalog
-        </h1>
-
-        {/* Filter toggle — mobile only */}
-        <button className="filter-toggle-btn" onClick={() => setDrawerOpen(true)}>
-          ☰ Filters
-        </button>
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <SearchBar value={inputValue} onChange={handleSearch} onClear={() => { clear(); setPage(1) }} />
-        </div>
-        <div style={{ flexShrink: 0 }}>
+    <>
+      <header className="site-header">
+        <div className="header-row1">
+          <span className="header-logo">📚 RPG Catalog</span>
+          <div className="header-search-wrap">
+            <SearchBar value={inputValue} onChange={handleSearch} onClear={() => { clear(); setPage(1) }} />
+          </div>
+          <button className="filter-toggle" onClick={() => setDrawerOpen(true)}>
+            ☰ Filters
+          </button>
           <IndexingPanel indexer={indexer} onStart={() => indexer.startIndex()} />
+        </div>
+        <div className="header-row2">
+          <SearchBar value={inputValue} onChange={handleSearch} onClear={() => { clear(); setPage(1) }} />
         </div>
       </header>
 
-      {/* Mobile drawer */}
+      {/* Mobile filter drawer */}
       {drawerOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 200 }} onClick={() => setDrawerOpen(false)}>
-          <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 300, background: '#fff', padding: '16px', overflowY: 'auto', boxShadow: '4px 0 24px rgba(0,0,0,.2)' }}
-            onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <span style={{ fontWeight: 700, fontSize: 15 }}>Filters</span>
-              <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#666' }}>×</button>
+        <div className="drawer-overlay" onClick={() => setDrawerOpen(false)}>
+          <div className="drawer" onClick={e => e.stopPropagation()}>
+            <div className="drawer-header">
+              <span className="drawer-title">Filters</span>
+              <button className="drawer-close" onClick={() => setDrawerOpen(false)}>×</button>
             </div>
-            <FilterSidebar {...sidebarProps} />
+            <div className="drawer-body">
+              <FilterSidebar {...sidebarProps} />
+            </div>
           </div>
         </div>
       )}
 
-      <div className="layout-body">
-        {/* Sidebar desktop */}
-        <div className="sidebar-col">
+      <div className="layout">
+        <aside className="sidebar">
           <FilterSidebar {...sidebarProps} />
-        </div>
+        </aside>
 
-        {/* Main */}
-        <main className="main-col">
-          {/* Toolbar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, color: '#888' }}>
-              {pagination ? `${pagination.total_items} books found` : '…'}
+        <main className="main">
+          <div className="toolbar">
+            <span className="toolbar-count">
+              {pagination ? `${pagination.total_items} books` : '…'}
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <label style={{ fontSize: 13, color: '#666' }}>Sort:</label>
+            <div className="sort-wrap">
+              <label className="sort-label">Sort:</label>
               <select
                 value={filters.sort}
                 onChange={e => { setSort(e.target.value); setPage(1) }}
-                style={{ fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', cursor: 'pointer' }}
+                className="sort-select"
               >
                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -124,6 +119,6 @@ export default function App() {
       </div>
 
       <BookModal book={selectedBook} onClose={() => setSelectedBook(null)} />
-    </div>
+    </>
   )
 }

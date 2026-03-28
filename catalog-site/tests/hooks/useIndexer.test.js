@@ -34,7 +34,7 @@ describe('useIndexer', () => {
   it('shows indexing state while running', async () => {
     server.use(http.get('/api/index/status', () => HttpResponse.json(STATUS_INDEXING)))
     const { result } = renderHook(() => useIndexer())
-    await waitFor(() => result.current.isIndexing === true)
+    await waitFor(() => { expect(result.current.isIndexing).toBe(true) })
     expect(result.current.progress.phase).toBe('extracting')
   })
 

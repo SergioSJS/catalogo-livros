@@ -1,9 +1,7 @@
 import { BookCard } from './BookCard.jsx'
 
 function SkeletonCard() {
-  return (
-    <div role="status" aria-label="Loading" style={{ background: '#f0f0f0', borderRadius: 12, height: 280, animation: 'pulse 1.5s ease-in-out infinite' }} />
-  )
+  return <div role="status" aria-label="Loading" className="skeleton" style={{ height: 280 }} />
 }
 
 export function BookGrid({ books, loading, onSelect }) {

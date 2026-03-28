@@ -6,7 +6,7 @@ const facets = {
   systems: [{ value: 'OSR', count: 10 }, { value: 'PbtA', count: 5 }],
   categories: [{ value: 'Core Rulebook', count: 8 }],
   genres: [{ value: 'Fantasy', count: 12 }],
-  languages: [{ value: 'en', label: 'English', count: 10 }, { value: 'pt', label: 'Português', count: 3 }],
+  languages: [{ value: 'en', label: 'English', count: 7 }, { value: 'pt', label: 'Português', count: 3 }],
   folders: [],
 }
 
