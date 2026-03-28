@@ -191,3 +191,47 @@ def test_patch_personal_fields_all_fields(seeded_client):
     assert data["played_status"] == "played"
     assert data["solo_friendly"] is True
     assert data["review"] == "Excelente jogo!"
+
+
+# ── Filtros pessoais ──────────────────────────────────────────────────────────
+
+def test_filter_by_read_status(seeded_client):
+    seeded_client.patch("/api/books/hash_a/personal", json={"read_status": "read"})
+    r = seeded_client.get("/api/books?read_status=read")
+    assert r.status_code == 200
+    items = r.json()["items"]
+    assert len(items) == 1
+    assert items[0]["file_hash"] == "hash_a"
+
+
+def test_filter_by_played_status(seeded_client):
+    seeded_client.patch("/api/books/hash_b/personal", json={"played_status": "played"})
+    r = seeded_client.get("/api/books?played_status=played")
+    items = r.json()["items"]
+    assert len(items) == 1
+    assert items[0]["file_hash"] == "hash_b"
+
+
+def test_filter_by_solo_friendly(seeded_client):
+    seeded_client.patch("/api/books/hash_a/personal", json={"solo_friendly": True})
+    seeded_client.patch("/api/books/hash_c/personal", json={"solo_friendly": True})
+    r = seeded_client.get("/api/books?solo_friendly=true")
+    assert r.json()["pagination"]["total_items"] == 2
+
+
+def test_filter_by_score_min(seeded_client):
+    seeded_client.patch("/api/books/hash_a/personal", json={"score": 5})
+    seeded_client.patch("/api/books/hash_b/personal", json={"score": 3})
+    r = seeded_client.get("/api/books?score_min=4")
+    items = r.json()["items"]
+    assert len(items) == 1
+    assert items[0]["file_hash"] == "hash_a"
+
+
+def test_filter_by_score_max(seeded_client):
+    seeded_client.patch("/api/books/hash_a/personal", json={"score": 5})
+    seeded_client.patch("/api/books/hash_b/personal", json={"score": 2})
+    r = seeded_client.get("/api/books?score_max=3")
+    items = r.json()["items"]
+    assert any(b["file_hash"] == "hash_b" for b in items)
+    assert not any(b["file_hash"] == "hash_a" for b in items)

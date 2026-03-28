@@ -25,7 +25,7 @@ export default function App() {
   const [selectedBook, setSelectedBook] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const { filters, toggleSystem, toggleCategory, toggleGenre, setLanguage, setFolder, setSort, reset, toParams } = useFilters()
+  const { filters, toggleSystem, toggleCategory, toggleGenre, setLanguage, setFolder, setSort, setReadStatus, setPlayedStatus, setSoloFriendly, setScoreMin, reset, toParams } = useFilters()
   const { inputValue, q, setInput, clear } = useSearch()
   const indexer = useIndexer()
 
@@ -52,6 +52,10 @@ export default function App() {
     onToggleGenre: handleFilterChange(toggleGenre),
     onSetLanguage: handleFilterChange(setLanguage),
     onSetFolder: handleFilterChange(setFolder),
+    onSetReadStatus: handleFilterChange(setReadStatus),
+    onSetPlayedStatus: handleFilterChange(setPlayedStatus),
+    onSetSoloFriendly: handleFilterChange(setSoloFriendly),
+    onSetScoreMin: handleFilterChange(setScoreMin),
     onReset: () => { reset(); setPage(1) },
   }
 
@@ -118,7 +122,11 @@ export default function App() {
         </main>
       </div>
 
-      <BookModal book={selectedBook} onClose={() => setSelectedBook(null)} />
+      <BookModal
+        book={selectedBook}
+        onClose={() => setSelectedBook(null)}
+        onUpdate={(updated) => setSelectedBook(updated)}
+      />
     </>
   )
 }

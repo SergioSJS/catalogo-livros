@@ -106,3 +106,37 @@ describe('fetchIndexStatus', () => {
     expect(mockFetch.mock.calls[0][0]).toContain('/api/index/status')
   })
 })
+
+describe('patchPersonalFields', () => {
+  it('calls PATCH /api/books/{hash}/personal', async () => {
+    const { patchPersonalFields } = await import('../../src/api/client.js')
+    mockFetch.mockReturnValue(mockOk({ read_status: 'read', score: 5 }))
+    await patchPersonalFields('abc123', { read_status: 'read', score: 5 })
+    expect(mockFetch.mock.calls[0][0]).toContain('/api/books/abc123/personal')
+    expect(mockFetch.mock.calls[0][1].method).toBe('PATCH')
+  })
+
+  it('sends JSON body', async () => {
+    const { patchPersonalFields } = await import('../../src/api/client.js')
+    mockFetch.mockReturnValue(mockOk({}))
+    await patchPersonalFields('abc123', { score: 4 })
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.score).toBe(4)
+  })
+})
+
+describe('fetchBooks personal filters', () => {
+  it('passes read_status param', async () => {
+    mockFetch.mockReturnValue(mockOk({ items: [], pagination: {} }))
+    await fetchBooks({ read_status: 'read' })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.get('read_status')).toBe('read')
+  })
+
+  it('passes solo_friendly param', async () => {
+    mockFetch.mockReturnValue(mockOk({ items: [], pagination: {} }))
+    await fetchBooks({ solo_friendly: true })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.get('solo_friendly')).toBe('true')
+  })
+})

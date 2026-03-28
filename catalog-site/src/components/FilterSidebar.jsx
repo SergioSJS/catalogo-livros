@@ -1,5 +1,13 @@
-export function FilterSidebar({ facets, filters, onToggleSystem, onToggleCategory, onToggleGenre, onSetLanguage, onSetFolder, onReset }) {
-  const hasActiveFilters = filters.systems.length > 0 || filters.categories.length > 0 || filters.genres.length > 0 || filters.language || filters.folder
+export function FilterSidebar({
+  facets, filters,
+  onToggleSystem, onToggleCategory, onToggleGenre, onSetLanguage, onSetFolder, onReset,
+  onSetReadStatus, onSetPlayedStatus, onSetSoloFriendly, onSetScoreMin,
+}) {
+  const hasActiveFilters = (
+    filters.systems.length > 0 || filters.categories.length > 0 ||
+    filters.genres.length > 0 || filters.language || filters.folder ||
+    filters.read_status || filters.played_status || filters.solo_friendly != null || filters.score_min != null
+  )
 
   return (
     <aside>
@@ -53,9 +61,71 @@ export function FilterSidebar({ facets, filters, onToggleSystem, onToggleCategor
           ))}
         </div>
       )}
+
+      {/* Personal filters */}
+      <div className="sidebar-section">
+        <h4 className="sidebar-heading">Leitura</h4>
+        {['unread', 'reading', 'read'].map(s => (
+          <label key={s} className={`facet-item${filters.read_status === s ? ' facet-active' : ''}`}>
+            <input
+              type="radio"
+              name="read_status"
+              checked={filters.read_status === s}
+              onChange={() => onSetReadStatus(s)}
+              aria-label={s}
+            />
+            <span className="facet-name">{READ_LABELS[s]}</span>
+          </label>
+        ))}
+      </div>
+
+      <div className="sidebar-section">
+        <h4 className="sidebar-heading">Jogado</h4>
+        {['unplayed', 'playing', 'played'].map(s => (
+          <label key={s} className={`facet-item${filters.played_status === s ? ' facet-active' : ''}`}>
+            <input
+              type="radio"
+              name="played_status"
+              checked={filters.played_status === s}
+              onChange={() => onSetPlayedStatus(s)}
+              aria-label={s}
+            />
+            <span className="facet-name">{PLAYED_LABELS[s]}</span>
+          </label>
+        ))}
+      </div>
+
+      <div className="sidebar-section">
+        <label className={`facet-item${filters.solo_friendly ? ' facet-active' : ''}`}>
+          <input
+            type="checkbox"
+            checked={!!filters.solo_friendly}
+            onChange={e => onSetSoloFriendly(e.target.checked ? true : null)}
+            aria-label="Solo friendly"
+          />
+          <span className="facet-name">Solo friendly</span>
+        </label>
+      </div>
+
+      <div className="sidebar-section">
+        <h4 className="sidebar-heading">Score mínimo</h4>
+        <div className="score-filter">
+          {[1, 2, 3, 4, 5].map(n => (
+            <button
+              key={n}
+              className={`star-btn${filters.score_min != null && n <= filters.score_min ? ' star-active' : ''}`}
+              onClick={() => onSetScoreMin(filters.score_min === n ? null : n)}
+              aria-label={`${n} estrelas`}
+            >★</button>
+          ))}
+        </div>
+      </div>
     </aside>
   )
 }
+
+const READ_LABELS = { unread: 'Não lido', reading: 'Lendo', read: 'Lido' }
+const PLAYED_LABELS = { unplayed: 'Não jogado', playing: 'Jogando', played: 'Jogado' }
 
 function FacetGroup({ title, items, active, onToggle }) {
   if (!items?.length) return null

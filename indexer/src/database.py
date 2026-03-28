@@ -272,6 +272,11 @@ class Database:
         tags: list[str] | None = None,
         folder: str | None = None,
         sort: str = "title_asc",
+        read_status: str | None = None,
+        played_status: str | None = None,
+        solo_friendly: bool | None = None,
+        score_min: int | None = None,
+        score_max: int | None = None,
     ) -> tuple[list[BookRecord], int]:
         order = _SORT_MAP.get(sort, "b.title ASC")
         offset = (page - 1) * per_page
@@ -322,6 +327,26 @@ class Database:
         if folder:
             conditions.append("b.parent_folder = ?")
             params.append(folder)
+
+        if read_status:
+            conditions.append("b.read_status = ?")
+            params.append(read_status)
+
+        if played_status:
+            conditions.append("b.played_status = ?")
+            params.append(played_status)
+
+        if solo_friendly is not None:
+            conditions.append("b.solo_friendly = ?")
+            params.append(1 if solo_friendly else 0)
+
+        if score_min is not None:
+            conditions.append("b.score >= ?")
+            params.append(score_min)
+
+        if score_max is not None:
+            conditions.append("b.score <= ?")
+            params.append(score_max)
 
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 

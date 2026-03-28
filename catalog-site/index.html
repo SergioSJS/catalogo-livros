@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RPG Catalog</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232d5016'/><text x='50%' y='22' text-anchor='middle' font-size='20'>📚</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
   <style>
@@ -225,6 +226,57 @@
       transition: background .15s;
     }
     .modal-dl-btn:hover { background: #3d6a1e; }
+
+    /* ── Personal Editor (modal) ────────────────────────────────── */
+    .personal-editor { border-top: 1px solid #f0ede6; padding-top: 14px; margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .personal-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .personal-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #888; min-width: 80px; padding-top: 4px; flex-shrink: 0; }
+    .personal-review-row { flex-direction: column; gap: 6px; }
+    .personal-review-row .personal-label { padding-top: 0; }
+    .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+    .status-btn {
+      font-size: 12px; padding: 4px 10px; border-radius: 20px;
+      border: 1px solid #d8d6d0; background: #f9f8f5; cursor: pointer;
+      color: #555; transition: all .1s;
+    }
+    .status-btn:hover { border-color: #2d5016; color: #2d5016; }
+    .status-btn.status-active { background: #2d5016; color: #fff; border-color: #2d5016; }
+    .star-rating { display: flex; gap: 2px; }
+    .star-btn {
+      background: none; border: none; font-size: 20px; cursor: pointer;
+      color: #ddd; padding: 0 2px; transition: color .1s;
+    }
+    .star-btn:hover { color: #c5913e; }
+    .star-btn.star-active { color: #c5913e; }
+    .score-filter { display: flex; gap: 2px; }
+    .review-input {
+      width: 100%; border: 1px solid #d8d6d0; border-radius: 8px;
+      padding: 8px 12px; font-size: 13px; font-family: inherit;
+      resize: vertical; color: #333; background: #fafaf8;
+    }
+    .review-input:focus { outline: none; border-color: #2d5016; }
+    .save-btn {
+      align-self: flex-end; padding: 8px 22px;
+      background: #2d5016; color: #fff; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: background .15s;
+    }
+    .save-btn:hover:not(:disabled) { background: #3d6a1e; }
+    .save-btn:disabled { opacity: .7; cursor: default; }
+    /* toggle switch */
+    .toggle-wrap { display: flex; align-items: center; cursor: pointer; }
+    .toggle-wrap input { display: none; }
+    .toggle-track {
+      width: 36px; height: 20px; background: #ccc; border-radius: 10px;
+      position: relative; transition: background .2s;
+    }
+    .toggle-wrap input:checked + .toggle-track { background: #2d5016; }
+    .toggle-thumb {
+      position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; border-radius: 50%; background: #fff;
+      transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+    .toggle-wrap input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
 
     /* ── Skeleton ────────────────────────────────────────────────── */
     .skeleton { background: #e8e6e0; border-radius: 12px; animation: pulse 1.4s ease-in-out infinite; }

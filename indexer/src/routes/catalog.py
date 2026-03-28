@@ -30,6 +30,11 @@ def list_books(
     tag: list[str] = Query(default=[]),
     folder: str | None = Query(None),
     sort: str = Query("title_asc"),
+    read_status: str | None = Query(None),
+    played_status: str | None = Query(None),
+    solo_friendly: bool | None = Query(None),
+    score_min: int | None = Query(None, ge=1, le=5),
+    score_max: int | None = Query(None, ge=1, le=5),
 ):
     items, total = db.list_books(
         page=page,
@@ -42,6 +47,11 @@ def list_books(
         tags=tag or None,
         folder=folder,
         sort=sort,
+        read_status=read_status,
+        played_status=played_status,
+        solo_friendly=solo_friendly,
+        score_min=score_min,
+        score_max=score_max,
     )
     import math
     total_pages = math.ceil(total / per_page) if per_page else 0

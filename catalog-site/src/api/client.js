@@ -27,13 +27,7 @@ async function apiFetch(path, options = {}) {
 
 // ── Catalog ───────────────────────────────────────────────────────────────────
 
-export function fetchBooks({ page = 1, perPage = 24, q, language, systems = [], categories = [], genres = [], tags = [], folder, sort } = {}) {
-  const params = { page, per_page: perPage }
-  if (q) params.q = q
-  if (language) params.language = language
-  if (sort) params.sort = sort
-  if (folder) params.folder = folder
-
+export function fetchBooks({ page = 1, perPage = 24, q, language, systems = [], categories = [], genres = [], tags = [], folder, sort, read_status, played_status, solo_friendly, score_min, score_max } = {}) {
   const url = new URL('/api/books', window?.location?.origin ?? 'http://localhost')
   url.searchParams.set('page', page)
   url.searchParams.set('per_page', perPage)
@@ -45,6 +39,11 @@ export function fetchBooks({ page = 1, perPage = 24, q, language, systems = [], 
   categories.forEach(c => url.searchParams.append('category', c))
   genres.forEach(g => url.searchParams.append('genre', g))
   tags.forEach(t => url.searchParams.append('tag', t))
+  if (read_status) url.searchParams.set('read_status', read_status)
+  if (played_status) url.searchParams.set('played_status', played_status)
+  if (solo_friendly != null) url.searchParams.set('solo_friendly', String(solo_friendly))
+  if (score_min != null) url.searchParams.set('score_min', score_min)
+  if (score_max != null) url.searchParams.set('score_max', score_max)
 
   return apiFetch(url.pathname + url.search)
 }
@@ -79,4 +78,12 @@ export function postIndex({ forceReindex = false, folders = [], dryRun = false }
 
 export function fetchIndexStatus() {
   return apiFetch('/api/index/status')
+}
+
+export function patchPersonalFields(hash, fields) {
+  return apiFetch(`/api/books/${hash}/personal`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+  })
 }
