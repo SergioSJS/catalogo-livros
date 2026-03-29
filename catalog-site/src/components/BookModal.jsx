@@ -25,7 +25,7 @@ function formatPath(relative_path, parent_folder, language) {
   return dirs.join(' › ')
 }
 
-export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, hasPrevPage, onClose, onUpdate, onRandom }) {
+export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, hasPrevPage, onClose, onUpdate, onRandom, onEnrich, enriching }) {
   const [personal, setPersonal] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
@@ -85,7 +85,7 @@ export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, has
   const {
     file_hash, title, summary, relative_path, filename, language, parent_folder,
     system_tags, category_tags, genre_tags, custom_tags,
-    page_count, file_size_human, llm_confidence, llm_provider, thumbnail_url,
+    page_count, file_size_human, llm_confidence, llm_provider, thumbnail_url, llm_error,
   } = book
 
   const cur = personal ?? {
@@ -202,6 +202,15 @@ export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, has
           {!editingMeta && (
             <button className="modal-action-btn" onClick={openMetaEditor} aria-label="Editar metadados" title="Editar metadados">✎</button>
           )}
+          {onEnrich && (
+            <button
+              className="modal-action-btn"
+              onClick={() => onEnrich(file_hash)}
+              disabled={enriching}
+              aria-label="Enriquecer com IA"
+              title="Solicitar enriquecimento por IA"
+            >✦</button>
+          )}
           <button onClick={onClose} aria-label="Fechar" className="modal-action-btn modal-close">×</button>
         </div>
 
@@ -280,6 +289,9 @@ export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, has
             {file_size_human && <div><strong>Tamanho:</strong> {file_size_human}</div>}
             {llm_confidence && (
               <div><strong>IA:</strong> {(llm_confidence * 100).toFixed(0)}% confiança{llm_provider ? ` · ${llm_provider}` : ''}</div>
+            )}
+            {llm_error && (
+              <div style={{ color: '#c0392b', fontSize: 13 }}><strong>Erro IA:</strong> {llm_error}</div>
             )}
           </div>
 

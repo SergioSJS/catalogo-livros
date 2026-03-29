@@ -286,6 +286,8 @@ export default function App() {
           setBookUpdates(prev => ({ ...prev, [updated.file_hash]: updated }))
         }}
         onRandom={handleRandomBook}
+        onEnrich={(hash) => enricher.startEnrich({ fileHashes: [hash] })}
+        enriching={enricher.isEnriching}
       />
 
       <footer className="site-footer">

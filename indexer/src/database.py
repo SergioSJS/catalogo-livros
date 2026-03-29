@@ -86,6 +86,7 @@ class Database:
                     category_tags,
                     genre_tags,
                     custom_tags,
+                    review,
                     tokenize='unicode61 remove_diacritics 2'
                 );
 
@@ -126,6 +127,33 @@ class Database:
             for col, col_def in migrations:
                 if col not in existing:
                     conn.execute(f"ALTER TABLE books ADD COLUMN {col} {col_def}")
+
+            # Migrate FTS table if review column is missing
+            fts_row = conn.execute(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name='books_fts'"
+            ).fetchone()
+            if fts_row and "review" not in fts_row[0]:
+                conn.executescript("""
+                    DROP TABLE IF EXISTS books_fts;
+                    CREATE VIRTUAL TABLE books_fts USING fts5(
+                        file_hash UNINDEXED, title, filename, parent_folder,
+                        summary, system_tags, category_tags, genre_tags, custom_tags, review,
+                        tokenize='unicode61 remove_diacritics 2'
+                    );
+                """)
+                # Rebuild FTS from all existing books
+                books = conn.execute(
+                    "SELECT file_hash, title, filename, parent_folder, summary, "
+                    "system_tags, category_tags, genre_tags, custom_tags, review FROM books"
+                ).fetchall()
+                for b in books:
+                    conn.execute(
+                        "INSERT INTO books_fts (file_hash, title, filename, parent_folder, "
+                        "summary, system_tags, category_tags, genre_tags, custom_tags, review) "
+                        "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (b[0], b[1], b[2], b[3], b[4] or "", b[5] or "", b[6] or "",
+                         b[7] or "", b[8] or "", b[9] or ""),
+                    )
 
     # ── CRUD ──────────────────────────────────────────────────────────────────
 
@@ -249,13 +277,14 @@ class Database:
             conn.execute("DELETE FROM books_fts WHERE file_hash=?", (book.file_hash,))
             conn.execute("""
                 INSERT INTO books_fts (file_hash, title, filename, parent_folder,
-                    summary, system_tags, category_tags, genre_tags, custom_tags)
-                VALUES (?,?,?,?,?,?,?,?,?)
+                    summary, system_tags, category_tags, genre_tags, custom_tags, review)
+                VALUES (?,?,?,?,?,?,?,?,?,?)
             """, (
                 book.file_hash, book.title, book.filename, book.parent_folder,
                 book.summary or "",
                 " ".join(book.system_tags), " ".join(book.category_tags),
                 " ".join(book.genre_tags), " ".join(book.custom_tags),
+                book.review or "",
             ))
 
     def remove_deleted_files(self, active_paths: set[str]) -> None:

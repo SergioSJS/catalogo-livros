@@ -155,6 +155,53 @@ def test_list_books_fts_no_diacritics(seeded_db):
     assert any("Dragão" in b.title for b in items)
 
 
+def test_list_books_fts_by_review(db):
+    """Busca por texto no campo review deve encontrar o livro."""
+    book = make_book("a")
+    db.upsert_book(book)
+    db.update_personal_fields("hash_a", review="Excelente regras para iniciantes")
+    updated = db.get_book("hash_a")
+    db.sync_fts(updated)
+    items, total = db.list_books(page=1, per_page=24, q="iniciantes")
+    assert total >= 1
+    assert any(b.file_hash == "hash_a" for b in items)
+
+
+def test_migrate_schema_rebuilds_fts_with_review(tmp_path):
+    """DB com FTS sem coluna review deve ter o FTS recriado com review."""
+    import sqlite3
+    db_path = str(tmp_path / "old.db")
+    conn = sqlite3.connect(db_path)
+    conn.execute("""CREATE TABLE books (
+        file_hash TEXT PRIMARY KEY, file_path TEXT NOT NULL,
+        relative_path TEXT NOT NULL, filename TEXT NOT NULL,
+        parent_folder TEXT NOT NULL, title TEXT NOT NULL,
+        language TEXT DEFAULT 'en', file_size INTEGER DEFAULT 0,
+        page_count INTEGER DEFAULT 0, thumbnail_file TEXT,
+        summary TEXT, system_tags TEXT DEFAULT '[]',
+        category_tags TEXT DEFAULT '[]', genre_tags TEXT DEFAULT '[]',
+        custom_tags TEXT DEFAULT '[]', llm_provider TEXT,
+        llm_confidence REAL, indexed_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    )""")
+    conn.execute("""CREATE VIRTUAL TABLE books_fts USING fts5(
+        file_hash UNINDEXED, title, filename, parent_folder,
+        summary, system_tags, category_tags, genre_tags, custom_tags,
+        tokenize='unicode61 remove_diacritics 2'
+    )""")
+    conn.commit()
+    conn.close()
+
+    db = Database(db_path)
+    db.migrate_schema()
+
+    # Check that the FTS table now includes review
+    with db._connect() as conn:
+        sql = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='books_fts'"
+        ).fetchone()[0]
+    assert "review" in sql
+
+
 # ── get_facets ────────────────────────────────────────────────────────────────
 
 def test_get_facets_languages(seeded_db):

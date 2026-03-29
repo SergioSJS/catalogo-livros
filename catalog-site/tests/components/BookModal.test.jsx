@@ -355,3 +355,33 @@ describe('BookModal — navegação prev/next', () => {
     expect(screen.queryByRole('button', { name: /próximo/i })).not.toBeInTheDocument()
   })
 })
+
+describe('BookModal — re-enrich button (C7)', () => {
+  it('shows re-enrich button when onEnrich prop is provided', () => {
+    render(<BookModal book={book} onClose={() => {}} onEnrich={vi.fn()} />)
+    expect(screen.getByRole('button', { name: /enriquecer com ia/i })).toBeInTheDocument()
+  })
+
+  it('does not show re-enrich button without onEnrich prop', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    expect(screen.queryByRole('button', { name: /enriquecer com ia/i })).not.toBeInTheDocument()
+  })
+
+  it('calls onEnrich with file_hash when button clicked', () => {
+    const onEnrich = vi.fn()
+    render(<BookModal book={book} onClose={() => {}} onEnrich={onEnrich} />)
+    fireEvent.click(screen.getByRole('button', { name: /enriquecer com ia/i }))
+    expect(onEnrich).toHaveBeenCalledWith('abc123')
+  })
+
+  it('disables re-enrich button when enriching prop is true', () => {
+    render(<BookModal book={book} onClose={() => {}} onEnrich={vi.fn()} enriching />)
+    expect(screen.getByRole('button', { name: /enriquecer com ia/i })).toBeDisabled()
+  })
+
+  it('shows llm_error badge when book has enrichment error', () => {
+    const errBook = { ...book, llm_error: 'LLM timeout', llm_provider: null }
+    render(<BookModal book={errBook} onClose={() => {}} onEnrich={vi.fn()} />)
+    expect(screen.getByText(/LLM timeout/i)).toBeInTheDocument()
+  })
+})
