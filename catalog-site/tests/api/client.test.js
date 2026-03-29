@@ -139,4 +139,74 @@ describe('fetchBooks personal filters', () => {
     const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
     expect(url.searchParams.get('solo_friendly')).toBe('true')
   })
+
+  it('passes played_status param', async () => {
+    mockFetch.mockReturnValue(mockOk({ items: [], pagination: {} }))
+    await fetchBooks({ played_status: 'played' })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.get('played_status')).toBe('played')
+  })
+
+  it('passes score_min and score_max params', async () => {
+    mockFetch.mockReturnValue(mockOk({ items: [], pagination: {} }))
+    await fetchBooks({ score_min: 3, score_max: 5 })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.get('score_min')).toBe('3')
+    expect(url.searchParams.get('score_max')).toBe('5')
+  })
+})
+
+describe('fetchBooks extra filters', () => {
+  it('passes multiple tags as repeated params', async () => {
+    mockFetch.mockReturnValue(mockOk({ items: [], pagination: {} }))
+    await fetchBooks({ tags: ['solo', 'osr'] })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.getAll('tag')).toEqual(['solo', 'osr'])
+  })
+
+  it('passes multiple categories', async () => {
+    mockFetch.mockReturnValue(mockOk({ items: [], pagination: {} }))
+    await fetchBooks({ categories: ['Core Rulebook', 'Supplement'] })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.getAll('category')).toEqual(['Core Rulebook', 'Supplement'])
+  })
+})
+
+describe('fetchFacets extra params', () => {
+  it('passes multiple systems', async () => {
+    mockFetch.mockReturnValue(mockOk({}))
+    await fetchFacets({ systems: ['OSR', 'PbtA'] })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.getAll('system')).toEqual(['OSR', 'PbtA'])
+  })
+
+  it('passes folder param', async () => {
+    mockFetch.mockReturnValue(mockOk({}))
+    await fetchFacets({ folder: 'RPG/EN' })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.get('folder')).toBe('RPG/EN')
+  })
+})
+
+describe('postIndex options', () => {
+  it('sends force_reindex flag', async () => {
+    mockFetch.mockReturnValue(mockOk({ job_id: 'x', status: 'started' }))
+    await postIndex({ forceReindex: true })
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.force_reindex).toBe(true)
+  })
+
+  it('sends dry_run flag', async () => {
+    mockFetch.mockReturnValue(mockOk({ job_id: 'x', status: 'started' }))
+    await postIndex({ dryRun: true })
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.dry_run).toBe(true)
+  })
+
+  it('sends folders array', async () => {
+    mockFetch.mockReturnValue(mockOk({ job_id: 'x', status: 'started' }))
+    await postIndex({ folders: ['RPG/EN', 'RPG/PT'] })
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.folders).toEqual(['RPG/EN', 'RPG/PT'])
+  })
 })

@@ -140,6 +140,7 @@ export function BookModal({ book, onClose, onUpdate }) {
               <label className="toggle-wrap">
                 <input
                   type="checkbox"
+                  aria-label="Solo friendly"
                   checked={cur.solo_friendly}
                   onChange={e => updateField('solo_friendly', e.target.checked)}
                 />

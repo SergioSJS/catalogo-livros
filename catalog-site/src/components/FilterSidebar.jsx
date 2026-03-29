@@ -72,7 +72,7 @@ export function FilterSidebar({
               name="read_status"
               checked={filters.read_status === s}
               onChange={() => onSetReadStatus(s)}
-              aria-label={s}
+              aria-label={READ_LABELS[s]}
             />
             <span className="facet-name">{READ_LABELS[s]}</span>
           </label>
@@ -88,7 +88,7 @@ export function FilterSidebar({
               name="played_status"
               checked={filters.played_status === s}
               onChange={() => onSetPlayedStatus(s)}
-              aria-label={s}
+              aria-label={PLAYED_LABELS[s]}
             />
             <span className="facet-name">{PLAYED_LABELS[s]}</span>
           </label>

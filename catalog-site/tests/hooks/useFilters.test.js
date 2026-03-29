@@ -103,4 +103,61 @@ describe('useFilters', () => {
     expect(params.read_status).toBe('read')
     expect(params.score_min).toBe(3)
   })
+
+  it('toggles a category filter on and off', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleCategory('Core Rulebook'))
+    expect(result.current.filters.categories).toContain('Core Rulebook')
+    act(() => result.current.toggleCategory('Core Rulebook'))
+    expect(result.current.filters.categories).not.toContain('Core Rulebook')
+  })
+
+  it('toggles a genre filter on and off', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleGenre('Fantasy'))
+    expect(result.current.filters.genres).toContain('Fantasy')
+    act(() => result.current.toggleGenre('Fantasy'))
+    expect(result.current.filters.genres).not.toContain('Fantasy')
+  })
+
+  it('sets folder (does not toggle)', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.setFolder('RPG/EN'))
+    expect(result.current.filters.folder).toBe('RPG/EN')
+    act(() => result.current.setFolder('RPG/EN'))
+    expect(result.current.filters.folder).toBe('RPG/EN')
+  })
+
+  it('sets sort', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.setSort('pages_desc'))
+    expect(result.current.filters.sort).toBe('pages_desc')
+  })
+
+  it('sets played_status and clears when same value', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.setPlayedStatus('played'))
+    expect(result.current.filters.played_status).toBe('played')
+    act(() => result.current.setPlayedStatus('played'))
+    expect(result.current.filters.played_status).toBeNull()
+  })
+
+  it('sets score_max', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.setScoreMax(3))
+    expect(result.current.filters.score_max).toBe(3)
+  })
+
+  it('reset clears all filters including categories and genres', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleCategory('Core Rulebook'))
+    act(() => result.current.toggleGenre('Fantasy'))
+    act(() => result.current.setFolder('RPG/EN'))
+    act(() => result.current.setPlayedStatus('played'))
+    act(() => result.current.reset())
+    expect(result.current.filters.categories).toEqual([])
+    expect(result.current.filters.genres).toEqual([])
+    expect(result.current.filters.folder).toBeNull()
+    expect(result.current.filters.played_status).toBeNull()
+  })
 })

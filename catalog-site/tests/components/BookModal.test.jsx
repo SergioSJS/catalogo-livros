@@ -137,6 +137,54 @@ describe('BookModal — editor pessoal', () => {
     })
   })
 
+  it('changes played_status and marks as dirty', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Jogado' }))
+    expect(screen.getByRole('button', { name: /salvar/i })).toBeInTheDocument()
+  })
+
+  it('toggles solo_friendly checkbox and marks as dirty', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('checkbox', { name: /solo friendly/i }))
+    expect(screen.getByRole('button', { name: /salvar/i })).toBeInTheDocument()
+  })
+
+  it('changes review textarea and marks as dirty', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    fireEvent.change(screen.getByPlaceholderText(/suas notas/i), { target: { value: 'Ótimo jogo!' } })
+    expect(screen.getByRole('button', { name: /salvar/i })).toBeInTheDocument()
+  })
+
+  it('sets score via star button and marks as dirty', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /4 estrelas/i }))
+    expect(screen.getByRole('button', { name: /salvar/i })).toBeInTheDocument()
+  })
+
+  it('sends all personal fields on save', async () => {
+    patchPersonalFields.mockResolvedValue({ ...book })
+    render(<BookModal book={book} onClose={() => {}} onUpdate={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lido' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Jogado' }))
+    fireEvent.click(screen.getByRole('button', { name: /4 estrelas/i }))
+    fireEvent.click(screen.getByRole('button', { name: /salvar/i }))
+
+    await waitFor(() => {
+      expect(patchPersonalFields).toHaveBeenCalledWith('abc123', expect.objectContaining({
+        read_status: 'read',
+        played_status: 'played',
+        score: 4,
+      }))
+    })
+  })
+
+  it('renders download link with correct hash', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    const link = screen.getByRole('link', { name: /download/i })
+    expect(link).toHaveAttribute('href', '/api/books/abc123/download')
+  })
+
   it('resets personal state when book changes', async () => {
     const { rerender } = render(<BookModal book={book} onClose={() => {}} />)
 
