@@ -5,12 +5,14 @@ import { useBooks } from './hooks/useBooks.js'
 import { useFacets } from './hooks/useFacets.js'
 import { useIndexer } from './hooks/useIndexer.js'
 import { useDarkMode } from './hooks/useDarkMode.js'
+import { useEnricher } from './hooks/useEnricher.js'
 import { BookGrid } from './components/BookGrid.jsx'
 import { BookModal } from './components/BookModal.jsx'
 import { FilterSidebar } from './components/FilterSidebar.jsx'
 import { SearchBar } from './components/SearchBar.jsx'
 import { Pagination } from './components/Pagination.jsx'
 import { IndexingPanel } from './components/IndexingPanel.jsx'
+import { EnrichingPanel } from './components/EnrichingPanel.jsx'
 import { BulkActionBar } from './components/BulkActionBar.jsx'
 import { fetchRandomBook, fetchVersion, buildExportUrl, patchBooksBulk } from './api/client.js'
 
@@ -40,6 +42,7 @@ export default function App() {
   const [bulkSaving, setBulkSaving] = useState(false)
 
   const { dark, toggle: toggleDark } = useDarkMode()
+  const enricher = useEnricher()
   const { filters, toggleSystem, toggleCategory, toggleGenre, toggleExcludeSystem, toggleExcludeCategory, toggleExcludeGenre, setLanguage, setFolder, setSort, setReadStatus, setPlayedStatus, setSoloFriendly, setScoreMin, reset, toParams } = useFilters()
   const { inputValue, q, setInput, clear } = useSearch()
   const indexer = useIndexer()
@@ -167,6 +170,7 @@ export default function App() {
             aria-label="Edição em massa"
             title="Edição em massa"
           >☑</button>
+          <EnrichingPanel enricher={enricher} onStart={() => enricher.startEnrich()} />
           <IndexingPanel indexer={indexer} onStart={() => indexer.startIndex()} />
         </div>
         <div className="header-row2">

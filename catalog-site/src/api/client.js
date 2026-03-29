@@ -102,6 +102,18 @@ export function fetchIndexStatus() {
   return apiFetch('/api/index/status')
 }
 
+export function postEnrich({ fileHashes = [], dryRun = false } = {}) {
+  return apiFetch('/api/enrich', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file_hashes: fileHashes, dry_run: dryRun }),
+  })
+}
+
+export function fetchEnrichStatus() {
+  return apiFetch('/api/enrich/status')
+}
+
 export function patchBookMetadata(hash, fields) {
   return apiFetch(`/api/books/${hash}/metadata`, {
     method: 'PATCH',

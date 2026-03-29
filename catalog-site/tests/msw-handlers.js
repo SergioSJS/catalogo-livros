@@ -24,6 +24,14 @@ export const STATUS_INDEXING = {
   status: 'indexing', current_job: 'idx-001', progress: { phase: 'extracting', total_files: 10, processed: 3, new_files: 3, skipped: 0, errors: 0, current_file: 'EN/Mausritter/book.pdf', elapsed_seconds: 5 }, last_run: null, errors_log: [],
 }
 
+export const STATUS_ENRICH_IDLE = {
+  status: 'idle', current_job: null, progress: {}, last_run: null, errors_log: [],
+}
+
+export const STATUS_ENRICHING = {
+  status: 'enriching', current_job: 'enr-001', progress: { phase: 'enriching', total: 10, processed: 3, errors: 0, current_file: 'mausritter.pdf' }, last_run: null, errors_log: [],
+}
+
 export const handlers = [
   http.get('/api/books', () => HttpResponse.json(BOOKS_RESPONSE)),
   http.get('/api/books/:hash', ({ params }) =>
@@ -33,4 +41,7 @@ export const handlers = [
   http.get('/api/stats', () => HttpResponse.json({ total_books: 2, total_size_bytes: 3072, total_size_human: '3.0 KB', total_pages: 108, by_language: { en: 2 }, by_system_top10: [], by_category: [], oldest_indexed: null, newest_indexed: null })),
   http.get('/api/index/status', () => HttpResponse.json(STATUS_IDLE)),
   http.post('/api/index', () => HttpResponse.json({ job_id: 'idx-001', status: 'started', message: 'Indexing started' }, { status: 202 })),
+  http.get('/api/enrich/status', () => HttpResponse.json(STATUS_ENRICH_IDLE)),
+  http.post('/api/enrich', () => HttpResponse.json({ job_id: 'enr-001', status: 'started', message: 'Enrichment started' }, { status: 202 })),
+  http.get('/api/version', () => HttpResponse.json({ version: '0.0.0' })),
 ]

@@ -19,6 +19,8 @@ vi.mock('../src/api/client.js', () => ({
   patchBooksBulk: vi.fn().mockResolvedValue({ updated: 0 }),
   fetchRandomBook: vi.fn().mockResolvedValue({}),
   fetchVersion: vi.fn().mockResolvedValue({ version: '0.2.0' }),
+  fetchEnrichStatus: vi.fn().mockResolvedValue({ status: 'idle', progress: null }),
+  postEnrich: vi.fn().mockResolvedValue({ job_id: 'enr-1', status: 'started' }),
   buildExportUrl: vi.fn(() => '/api/export?format=json'),
 }))
 
