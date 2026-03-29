@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { patchPersonalFields } from '../api/client.js'
 
 const LANG_LABEL = { en: 'English', pt: 'Português' }
@@ -17,6 +17,13 @@ function stripMarkdown(text) {
 export function BookModal({ book, onClose, onUpdate }) {
   const [personal, setPersonal] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
+
+  // Reset personal state when book changes
+  useEffect(() => {
+    setPersonal(null)
+    setSaveError(null)
+  }, [book?.file_hash])
 
   if (!book) return null
 
@@ -40,6 +47,7 @@ export function BookModal({ book, onClose, onUpdate }) {
 
   async function handleSave() {
     setSaving(true)
+    setSaveError(null)
     try {
       const updated = await patchPersonalFields(file_hash, {
         read_status: cur.read_status,
@@ -50,6 +58,8 @@ export function BookModal({ book, onClose, onUpdate }) {
       })
       setPersonal(null)
       onUpdate?.(updated)
+    } catch (err) {
+      setSaveError(`Erro ao salvar: ${err.message}`)
     } finally {
       setSaving(false)
     }
@@ -164,6 +174,9 @@ export function BookModal({ book, onClose, onUpdate }) {
               />
             </div>
 
+            {saveError && (
+              <p style={{ color: '#c0392b', fontSize: 13, margin: 0 }}>{saveError}</p>
+            )}
             {isDirty && (
               <button
                 className="save-btn"
