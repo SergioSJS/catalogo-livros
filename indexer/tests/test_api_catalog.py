@@ -235,3 +235,55 @@ def test_filter_by_score_max(seeded_client):
     items = r.json()["items"]
     assert any(b["file_hash"] == "hash_b" for b in items)
     assert not any(b["file_hash"] == "hash_a" for b in items)
+
+# ── PATCH /api/books/{hash}/metadata ─────────────────────────────────────────
+
+def test_patch_metadata_title(seeded_client):
+    r = seeded_client.patch("/api/books/hash_a/metadata", json={"title": "Novo Título"})
+    assert r.status_code == 200
+    assert r.json()["title"] == "Novo Título"
+
+
+def test_patch_metadata_summary(seeded_client):
+    r = seeded_client.patch("/api/books/hash_a/metadata", json={"summary": "Resumo editado."})
+    assert r.status_code == 200
+    assert r.json()["summary"] == "Resumo editado."
+
+
+def test_patch_metadata_tags(seeded_client):
+    r = seeded_client.patch("/api/books/hash_a/metadata", json={
+        "system_tags": ["D&D"],
+        "category_tags": ["Supplement"],
+        "genre_tags": ["Horror"],
+        "custom_tags": ["favorito"],
+    })
+    assert r.status_code == 200
+    data = r.json()
+    assert data["system_tags"] == ["D&D"]
+    assert data["category_tags"] == ["Supplement"]
+    assert data["genre_tags"] == ["Horror"]
+    assert data["custom_tags"] == ["favorito"]
+
+
+def test_patch_metadata_partial(seeded_client):
+    seeded_client.patch("/api/books/hash_a/metadata", json={"title": "Título A"})
+    r = seeded_client.get("/api/books/hash_a")
+    assert r.json()["title"] == "Título A"
+    assert r.json()["system_tags"] == ["OSR"]  # inalterado
+
+
+def test_patch_metadata_not_found(seeded_client):
+    r = seeded_client.patch("/api/books/nonexistent/metadata", json={"title": "X"})
+    assert r.status_code == 404
+
+
+def test_patch_metadata_empty_title_rejected(seeded_client):
+    r = seeded_client.patch("/api/books/hash_a/metadata", json={"title": ""})
+    assert r.status_code == 422
+
+
+def test_patch_metadata_updates_fts(seeded_client):
+    seeded_client.patch("/api/books/hash_a/metadata", json={"title": "Título Único FTS"})
+    r = seeded_client.get("/api/books?q=Único")
+    items = r.json()["items"]
+    assert any(b["file_hash"] == "hash_a" for b in items)

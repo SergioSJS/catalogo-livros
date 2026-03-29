@@ -80,6 +80,14 @@ export function fetchIndexStatus() {
   return apiFetch('/api/index/status')
 }
 
+export function patchBookMetadata(hash, fields) {
+  return apiFetch(`/api/books/${hash}/metadata`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+  })
+}
+
 export function patchPersonalFields(hash, fields) {
   return apiFetch(`/api/books/${hash}/personal`, {
     method: 'PATCH',

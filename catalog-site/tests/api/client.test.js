@@ -188,6 +188,25 @@ describe('fetchFacets extra params', () => {
   })
 })
 
+describe('patchBookMetadata', () => {
+  it('calls PATCH /api/books/{hash}/metadata', async () => {
+    const { patchBookMetadata } = await import('../../src/api/client.js')
+    mockFetch.mockReturnValue(mockOk({ title: 'Novo Título' }))
+    await patchBookMetadata('abc123', { title: 'Novo Título' })
+    expect(mockFetch.mock.calls[0][0]).toContain('/api/books/abc123/metadata')
+    expect(mockFetch.mock.calls[0][1].method).toBe('PATCH')
+  })
+
+  it('sends JSON body with tags as arrays', async () => {
+    const { patchBookMetadata } = await import('../../src/api/client.js')
+    mockFetch.mockReturnValue(mockOk({}))
+    await patchBookMetadata('abc123', { system_tags: ['OSR'], custom_tags: [] })
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.system_tags).toEqual(['OSR'])
+    expect(body.custom_tags).toEqual([])
+  })
+})
+
 describe('postIndex options', () => {
   it('sends force_reindex flag', async () => {
     mockFetch.mockReturnValue(mockOk({ job_id: 'x', status: 'started' }))

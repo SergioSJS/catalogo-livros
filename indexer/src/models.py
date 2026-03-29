@@ -214,6 +214,15 @@ class StatsResponse(BaseModel):
     newest_indexed: str | None
 
 
+class BookMetadataUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1)
+    summary: str | None = None
+    system_tags: list[str] | None = None
+    category_tags: list[str] | None = None
+    genre_tags: list[str] | None = None
+    custom_tags: list[str] | None = None
+
+
 class PersonalFieldsUpdate(BaseModel):
     read_status: Literal["unread", "reading", "read"] | None = None
     played_status: Literal["unplayed", "playing", "played"] | None = None

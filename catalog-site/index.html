@@ -278,6 +278,47 @@
     }
     .toggle-wrap input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
 
+    /* ── Metadata Editor (modal) ────────────────────────────────── */
+    .edit-meta-btn {
+      background: none; border: 1px solid #d8d6d0; border-radius: 8px;
+      padding: 5px 12px; font-size: 12px; color: #888; cursor: pointer;
+      margin: 8px 0; transition: all .1s;
+    }
+    .edit-meta-btn:hover { border-color: #2d5016; color: #2d5016; }
+    .meta-editor { border-top: 1px solid #f0ede6; padding-top: 14px; margin-top: 8px; display: flex; flex-direction: column; gap: 12px; }
+    .meta-field { display: flex; flex-direction: column; gap: 4px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #888; }
+    .meta-input {
+      border: 1px solid #d8d6d0; border-radius: 8px; padding: 7px 12px;
+      font-size: 14px; font-family: inherit; color: #222;
+    }
+    .meta-input:focus { outline: none; border-color: #2d5016; }
+    .meta-textarea {
+      border: 1px solid #d8d6d0; border-radius: 8px; padding: 8px 12px;
+      font-size: 13px; font-family: inherit; color: #333; resize: vertical;
+    }
+    .meta-textarea:focus { outline: none; border-color: #2d5016; }
+    .meta-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cancel-btn {
+      padding: 8px 16px; border: 1px solid #d8d6d0; border-radius: 8px;
+      background: #fff; color: #666; font-size: 14px; cursor: pointer;
+      transition: background .1s;
+    }
+    .cancel-btn:hover { background: #f0ede6; }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #f0ede6; border-radius: 20px;
+      padding: 3px 10px; font-size: 12px; color: #444;
+    }
+    .chip-remove { background: none; border: none; cursor: pointer; color: #999; font-size: 14px; line-height: 1; padding: 0; }
+    .chip-remove:hover { color: #c0392b; }
+    .chip-input-row { display: flex; gap: 6px; margin-top: 4px; }
+    .chip-input { flex: 1; border: 1px solid #d8d6d0; border-radius: 8px; padding: 5px 10px; font-size: 13px; font-family: inherit; }
+    .chip-input:focus { outline: none; border-color: #2d5016; }
+    .chip-add-btn { padding: 5px 12px; border-radius: 8px; border: 1px solid #2d5016; background: #fff; color: #2d5016; font-size: 16px; cursor: pointer; }
+    .chip-add-btn:hover { background: #2d5016; color: #fff; }
+
     /* ── Skeleton ────────────────────────────────────────────────── */
     .skeleton { background: #e8e6e0; border-radius: 12px; animation: pulse 1.4s ease-in-out infinite; }
 

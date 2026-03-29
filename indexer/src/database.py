@@ -222,6 +222,28 @@ class Database:
                     conn.execute("DELETE FROM books WHERE file_path=?", (path,))
                 conn.execute("DELETE FROM scan_log WHERE file_path=?", (path,))
 
+    def update_book_metadata(self, file_hash: str, **kwargs) -> None:
+        """Atualiza título, resumo e/ou tags. Ressincroniza FTS."""
+        tag_fields = {"system_tags", "category_tags", "genre_tags", "custom_tags"}
+        allowed = {"title", "summary"} | tag_fields
+        fields: dict = {}
+        for k, v in kwargs.items():
+            if k not in allowed or v is None:
+                continue
+            fields[k] = json.dumps(v) if k in tag_fields else v
+        if not fields:
+            return
+        fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+        set_clause = ", ".join(f"{k}=?" for k in fields)
+        with self._connect() as conn:
+            conn.execute(
+                f"UPDATE books SET {set_clause} WHERE file_hash=?",
+                (*fields.values(), file_hash),
+            )
+        book = self.get_book(file_hash)
+        if book:
+            self.sync_fts(book)
+
     def update_personal_fields(self, file_hash: str, **kwargs) -> None:
         """Atualiza campos pessoais (read_status, played_status, solo_friendly, review, score)."""
         allowed = {"read_status", "played_status", "solo_friendly", "review", "score"}

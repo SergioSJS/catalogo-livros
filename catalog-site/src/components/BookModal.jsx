@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { patchPersonalFields } from '../api/client.js'
+import { patchPersonalFields, patchBookMetadata } from '../api/client.js'
 
 const LANG_LABEL = { en: 'English', pt: 'Português' }
 const READ_LABELS = { unread: 'Não lido', reading: 'Lendo', read: 'Lido' }
@@ -18,11 +18,18 @@ export function BookModal({ book, onClose, onUpdate }) {
   const [personal, setPersonal] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
+  const [editingMeta, setEditingMeta] = useState(false)
+  const [meta, setMeta] = useState(null)
+  const [metaSaving, setMetaSaving] = useState(false)
+  const [metaError, setMetaError] = useState(null)
 
-  // Reset personal state when book changes
+  // Reset all state when book changes
   useEffect(() => {
     setPersonal(null)
     setSaveError(null)
+    setEditingMeta(false)
+    setMeta(null)
+    setMetaError(null)
   }, [book?.file_hash])
 
   if (!book) return null
@@ -67,6 +74,58 @@ export function BookModal({ book, onClose, onUpdate }) {
 
   const isDirty = personal !== null
 
+  // Metadata editor helpers
+  const curMeta = meta ?? {
+    title: book.title ?? '',
+    summary: book.summary ?? '',
+    system_tags: [...(book.system_tags ?? [])],
+    category_tags: [...(book.category_tags ?? [])],
+    genre_tags: [...(book.genre_tags ?? [])],
+    custom_tags: [...(book.custom_tags ?? [])],
+  }
+
+  function openMetaEditor() {
+    setMeta({
+      title: book.title ?? '',
+      summary: book.summary ?? '',
+      system_tags: [...(book.system_tags ?? [])],
+      category_tags: [...(book.category_tags ?? [])],
+      genre_tags: [...(book.genre_tags ?? [])],
+      custom_tags: [...(book.custom_tags ?? [])],
+    })
+    setEditingMeta(true)
+    setMetaError(null)
+  }
+
+  function updateMeta(field, value) {
+    setMeta(m => ({ ...m, [field]: value }))
+  }
+
+  function removeTag(field, tag) {
+    setMeta(m => ({ ...m, [field]: m[field].filter(t => t !== tag) }))
+  }
+
+  function addTag(field, tag) {
+    const trimmed = tag.trim()
+    if (!trimmed) return
+    setMeta(m => ({ ...m, [field]: m[field].includes(trimmed) ? m[field] : [...m[field], trimmed] }))
+  }
+
+  async function handleMetaSave() {
+    setMetaSaving(true)
+    setMetaError(null)
+    try {
+      const updated = await patchBookMetadata(file_hash, curMeta)
+      setEditingMeta(false)
+      setMeta(null)
+      onUpdate?.(updated)
+    } catch (err) {
+      setMetaError(`Erro ao salvar: ${err.message}`)
+    } finally {
+      setMetaSaving(false)
+    }
+  }
+
   return (
     <div
       role="dialog"
@@ -94,8 +153,57 @@ export function BookModal({ book, onClose, onUpdate }) {
             </div>
           </div>
 
-          {summary && (
+          {summary && !editingMeta && (
             <p className="modal-summary">{stripMarkdown(summary)}</p>
+          )}
+
+          {!editingMeta && (
+            <button className="edit-meta-btn" onClick={openMetaEditor} aria-label="Editar metadados">
+              ✎ Editar metadados
+            </button>
+          )}
+
+          {editingMeta && (
+            <div className="meta-editor">
+              <div className="meta-field">
+                <label className="meta-label" htmlFor="meta-title">Título</label>
+                <input
+                  id="meta-title"
+                  aria-label="Título"
+                  className="meta-input"
+                  value={curMeta.title}
+                  onChange={e => updateMeta('title', e.target.value)}
+                />
+              </div>
+
+              <div className="meta-field">
+                <label className="meta-label" htmlFor="meta-summary">Resumo</label>
+                <textarea
+                  id="meta-summary"
+                  aria-label="Resumo"
+                  className="meta-textarea"
+                  value={curMeta.summary}
+                  onChange={e => updateMeta('summary', e.target.value)}
+                  rows={4}
+                />
+              </div>
+
+              <TagChipEditor label="Sistemas" field="system_tags" tags={curMeta.system_tags} onRemove={removeTag} onAdd={addTag} />
+              <TagChipEditor label="Categorias" field="category_tags" tags={curMeta.category_tags} onRemove={removeTag} onAdd={addTag} />
+              <TagChipEditor label="Gêneros" field="genre_tags" tags={curMeta.genre_tags} onRemove={removeTag} onAdd={addTag} />
+              <TagChipEditor label="Tags" field="custom_tags" tags={curMeta.custom_tags} onRemove={removeTag} onAdd={addTag} />
+
+              {metaError && <p style={{ color: '#c0392b', fontSize: 13, margin: 0 }}>{metaError}</p>}
+
+              <div className="meta-actions">
+                <button className="save-btn" onClick={handleMetaSave} disabled={metaSaving} aria-label="Salvar metadados">
+                  {metaSaving ? 'Salvando…' : 'Salvar metadados'}
+                </button>
+                <button className="cancel-btn" onClick={() => { setEditingMeta(false); setMeta(null) }} aria-label="Cancelar">
+                  Cancelar
+                </button>
+              </div>
+            </div>
           )}
 
           <div className="modal-meta">
@@ -206,5 +314,48 @@ export function BookModal({ book, onClose, onUpdate }) {
 function Tag({ label, color }) {
   return (
     <span style={{ background: color, color: '#fff', borderRadius: 4, padding: '3px 8px', fontSize: 12 }}>{label}</span>
+  )
+}
+
+function TagChipEditor({ label, field, tags, onRemove, onAdd }) {
+  const [input, setInput] = useState('')
+  const singular = label.replace(/s$/, '').toLowerCase()
+
+  function handleAdd() {
+    if (!input.trim()) return
+    onAdd(field, input)
+    setInput('')
+  }
+
+  return (
+    <div className="meta-field">
+      <span className="meta-label">{label}</span>
+      <div className="chip-list">
+        {tags.map(t => (
+          <span key={t} className="chip">
+            {t}
+            <button
+              className="chip-remove"
+              onClick={() => onRemove(field, t)}
+              aria-label={`Remover ${t}`}
+            >×</button>
+          </span>
+        ))}
+      </div>
+      <div className="chip-input-row">
+        <input
+          className="chip-input"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder={`Adicionar ${singular}…`}
+          onKeyDown={e => e.key === 'Enter' && handleAdd()}
+        />
+        <button
+          className="chip-add-btn"
+          onClick={handleAdd}
+          aria-label={`Adicionar ${singular}`}
+        >+</button>
+      </div>
+    </div>
   )
 }

@@ -5,8 +5,9 @@ import { BookModal } from '../../src/components/BookModal.jsx'
 // Mock the API client
 vi.mock('../../src/api/client.js', () => ({
   patchPersonalFields: vi.fn(),
+  patchBookMetadata: vi.fn(),
 }))
-import { patchPersonalFields } from '../../src/api/client.js'
+import { patchPersonalFields, patchBookMetadata } from '../../src/api/client.js'
 
 const book = {
   file_hash: 'abc123',
@@ -34,6 +35,7 @@ const book = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  patchBookMetadata.mockResolvedValue({ ...book })
 })
 
 describe('BookModal — renderização', () => {
@@ -198,5 +200,63 @@ describe('BookModal — editor pessoal', () => {
 
     // Save button deve sumir (estado resetado)
     expect(screen.queryByRole('button', { name: /salvar/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('BookModal — editor de metadados', () => {
+  it('shows edit metadata button', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    expect(screen.getByRole('button', { name: /editar metadados/i })).toBeInTheDocument()
+  })
+
+  it('clicking edit shows title input with current value', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /editar metadados/i }))
+    expect(screen.getByRole('textbox', { name: /título/i })).toHaveValue('Mausritter')
+  })
+
+  it('clicking edit shows summary textarea', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /editar metadados/i }))
+    expect(screen.getByRole('textbox', { name: /resumo/i })).toBeInTheDocument()
+  })
+
+  it('can change title and save calls patchBookMetadata', async () => {
+    render(<BookModal book={book} onClose={() => {}} onUpdate={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /editar metadados/i }))
+    fireEvent.change(screen.getByRole('textbox', { name: /título/i }), { target: { value: 'Novo Título' } })
+    fireEvent.click(screen.getByRole('button', { name: /salvar metadados/i }))
+    await waitFor(() => {
+      expect(patchBookMetadata).toHaveBeenCalledWith('abc123', expect.objectContaining({ title: 'Novo Título' }))
+    })
+  })
+
+  it('cancel hides the metadata editor', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /editar metadados/i }))
+    fireEvent.click(screen.getByRole('button', { name: /cancelar/i }))
+    expect(screen.queryByRole('textbox', { name: /título/i })).not.toBeInTheDocument()
+  })
+
+  it('can remove a tag chip', async () => {
+    render(<BookModal book={book} onClose={() => {}} onUpdate={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /editar metadados/i }))
+    fireEvent.click(screen.getByRole('button', { name: /remover OSR/i }))
+    fireEvent.click(screen.getByRole('button', { name: /salvar metadados/i }))
+    await waitFor(() => {
+      expect(patchBookMetadata).toHaveBeenCalledWith('abc123', expect.objectContaining({ system_tags: [] }))
+    })
+  })
+
+  it('can add a new tag', async () => {
+    render(<BookModal book={book} onClose={() => {}} onUpdate={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /editar metadados/i }))
+    const input = screen.getByPlaceholderText(/adicionar sistema/i)
+    fireEvent.change(input, { target: { value: 'PbtA' } })
+    fireEvent.click(screen.getByRole('button', { name: /adicionar sistema/i }))
+    fireEvent.click(screen.getByRole('button', { name: /salvar metadados/i }))
+    await waitFor(() => {
+      expect(patchBookMetadata).toHaveBeenCalledWith('abc123', expect.objectContaining({ system_tags: ['OSR', 'PbtA'] }))
+    })
   })
 })
