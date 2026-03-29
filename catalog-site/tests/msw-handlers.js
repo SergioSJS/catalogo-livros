@@ -43,5 +43,6 @@ export const handlers = [
   http.post('/api/index', () => HttpResponse.json({ job_id: 'idx-001', status: 'started', message: 'Indexing started' }, { status: 202 })),
   http.get('/api/enrich/status', () => HttpResponse.json(STATUS_ENRICH_IDLE)),
   http.post('/api/enrich', () => HttpResponse.json({ job_id: 'enr-001', status: 'started', message: 'Enrichment started' }, { status: 202 })),
+  http.get('/api/enrich/failed-count', () => HttpResponse.json({ count: 0 })),
   http.get('/api/version', () => HttpResponse.json({ version: '0.0.0' })),
 ]

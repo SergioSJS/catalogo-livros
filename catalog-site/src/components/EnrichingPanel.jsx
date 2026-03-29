@@ -1,5 +1,5 @@
 export function EnrichingPanel({ enricher, onStart }) {
-  const { isEnriching, progress, error } = enricher
+  const { isEnriching, progress, error, failedCount, startEnrichRetry } = enricher
   const total = progress?.total ?? 0
   const processed = progress?.processed ?? 0
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0
@@ -15,6 +15,16 @@ export function EnrichingPanel({ enricher, onStart }) {
       >
         {isEnriching ? 'IA…' : '✦ IA'}
       </button>
+      {!isEnriching && failedCount > 0 && (
+        <button
+          onClick={startEnrichRetry}
+          className="index-btn"
+          aria-label={`Retry ${failedCount} failed`}
+          title={`Retry ${failedCount} books that failed LLM enrichment`}
+        >
+          🔁 {failedCount}
+        </button>
+      )}
       {isEnriching && (
         <>
           {progress?.current_file && (

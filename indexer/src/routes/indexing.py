@@ -176,7 +176,7 @@ def _set_enrich_state(**kwargs) -> None:
         _enrich_state.update(kwargs)
 
 
-def run_enrichment_job(job_id: str, db_path: str, config_path: str, file_hashes: list[str]) -> None:
+def run_enrichment_job(job_id: str, db_path: str, config_path: str, file_hashes: list[str], retry_failed: bool = False) -> None:
     """Runs LLM enrichment on unenriched books (or specific hashes) in background."""
     _set_enrich_state(status="enriching", current_job=job_id, progress={
         "phase": "loading", "total": 0, "processed": 0, "errors": 0, "current_file": None,
@@ -224,6 +224,8 @@ def run_enrichment_job(job_id: str, db_path: str, config_path: str, file_hashes:
         # Select target books
         if file_hashes:
             books = [db.get_book(h) for h in file_hashes if db.get_book(h)]
+        elif retry_failed:
+            books, _ = db.list_books(page=1, per_page=100_000, has_llm_error=True)
         else:
             # All books without llm_provider (not yet enriched)
             all_books, _ = db.list_books(page=1, per_page=100_000)
@@ -262,7 +264,9 @@ def run_enrichment_job(job_id: str, db_path: str, config_path: str, file_hashes:
                         (result.llm_provider, result.confidence,
                          datetime.now(timezone.utc).isoformat(), book.file_hash),
                     )
+                db.clear_llm_error(book.file_hash)
             except Exception as exc:
+                db.set_llm_error(book.file_hash, str(exc))
                 error_log.append({"file": book.filename, "error": str(exc)})
                 with _enrich_lock:
                     _enrich_state["progress"]["errors"] = len(error_log)
@@ -282,6 +286,7 @@ def run_enrichment_job(job_id: str, db_path: str, config_path: str, file_hashes:
 
 class EnrichRequest(BaseModel):
     file_hashes: list[str] = []
+    retry_failed: bool = False
     dry_run: bool = False
 
 
@@ -305,7 +310,8 @@ def start_enrich(
         db_path = os.environ.get("DATABASE_PATH", "/data/db/catalog.db")
         config_path = os.environ.get("CONFIG_PATH", "config.yaml")
         background_tasks.add_task(
-            run_enrichment_job, job_id, db_path, config_path, request.file_hashes,
+            run_enrichment_job, job_id, db_path, config_path,
+            request.file_hashes, request.retry_failed,
         )
 
     return {"job_id": job_id, "status": "started", "message": "Enrichment started"}
@@ -314,6 +320,16 @@ def start_enrich(
 @router.get("/enrich/status")
 def enrich_status():
     return get_enrichment_state()
+
+
+@router.get("/enrich/failed-count")
+def enrich_failed_count():
+    """Returns count of books with llm_error for retry indicator."""
+    from src.database import Database
+    db_path = os.environ.get("DATABASE_PATH", "/data/db/catalog.db")
+    db = Database(db_path)
+    _, count = db.list_books(page=1, per_page=1, has_llm_error=True)
+    return {"count": count}
 
 
 BACKEND_VERSION = os.environ.get("APP_VERSION", "dev")

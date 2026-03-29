@@ -269,3 +269,75 @@ def test_list_books_include_and_exclude_combined(seeded_db):
     results, _ = seeded_db.list_books(systems=["OSR"], genres_not=["Horror"])
     assert all("OSR" in b.system_tags for b in results)
     assert all("Horror" not in b.genre_tags for b in results)
+
+
+# ── llm_error / llm_retries columns ──────────────────────────────────────────
+
+def test_schema_has_llm_error_columns(db):
+    with db._connect() as conn:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(books)").fetchall()}
+    assert "llm_error" in cols
+    assert "llm_retries" in cols
+
+
+def test_set_llm_error(db):
+    book = make_book("a")
+    db.upsert_book(book)
+    db.set_llm_error("hash_a", "Timeout error")
+    updated = db.get_book("hash_a")
+    assert updated.llm_error == "Timeout error"
+    assert updated.llm_retries == 1
+
+
+def test_set_llm_error_increments_retries(db):
+    book = make_book("a")
+    db.upsert_book(book)
+    db.set_llm_error("hash_a", "Error 1")
+    db.set_llm_error("hash_a", "Error 2")
+    updated = db.get_book("hash_a")
+    assert updated.llm_retries == 2
+    assert updated.llm_error == "Error 2"
+
+
+def test_clear_llm_error(db):
+    book = make_book("a")
+    db.upsert_book(book)
+    db.set_llm_error("hash_a", "Error")
+    db.clear_llm_error("hash_a")
+    updated = db.get_book("hash_a")
+    assert updated.llm_error is None
+
+
+def test_list_books_with_llm_error(db):
+    for s in ("a", "b", "c"):
+        db.upsert_book(make_book(s))
+    db.set_llm_error("hash_a", "Failed")
+    db.set_llm_error("hash_b", "Timeout")
+    results, total = db.list_books(has_llm_error=True)
+    assert total == 2
+    hashes = {b.file_hash for b in results}
+    assert hashes == {"hash_a", "hash_b"}
+
+
+def test_migrate_schema_adds_llm_error_columns(tmp_path):
+    """DB sem colunas llm_error deve recebê-las via migrate_schema."""
+    db_path = str(tmp_path / "old.db")
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    conn.execute("""CREATE TABLE books (
+        file_hash TEXT PRIMARY KEY, file_path TEXT NOT NULL, relative_path TEXT,
+        filename TEXT, parent_folder TEXT, title TEXT, language TEXT,
+        file_size INTEGER, page_count INTEGER, thumbnail_file TEXT, summary TEXT,
+        system_tags TEXT, category_tags TEXT, genre_tags TEXT, custom_tags TEXT,
+        llm_provider TEXT, llm_confidence REAL, indexed_at TEXT, updated_at TEXT
+    )""")
+    conn.commit()
+    conn.close()
+
+    db = Database(db_path)
+    db.migrate_schema()
+
+    with db._connect() as conn:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(books)").fetchall()}
+    assert "llm_error" in cols
+    assert "llm_retries" in cols

@@ -102,16 +102,20 @@ export function fetchIndexStatus() {
   return apiFetch('/api/index/status')
 }
 
-export function postEnrich({ fileHashes = [], dryRun = false } = {}) {
+export function postEnrich({ fileHashes = [], retryFailed = false, dryRun = false } = {}) {
   return apiFetch('/api/enrich', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ file_hashes: fileHashes, dry_run: dryRun }),
+    body: JSON.stringify({ file_hashes: fileHashes, retry_failed: retryFailed, dry_run: dryRun }),
   })
 }
 
 export function fetchEnrichStatus() {
   return apiFetch('/api/enrich/status')
+}
+
+export function fetchEnrichFailedCount() {
+  return apiFetch('/api/enrich/failed-count')
 }
 
 export function patchBookMetadata(hash, fields) {

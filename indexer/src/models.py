@@ -39,6 +39,9 @@ class BookRecord:
     solo_friendly: bool = False
     review: str | None = None
     score: int | None = None
+    # Campos de enriquecimento LLM
+    llm_error: str | None = None
+    llm_retries: int = 0
 
 
 @dataclass
@@ -105,6 +108,8 @@ class BookResponse(BaseModel):
     solo_friendly: bool
     review: str | None
     score: int | None
+    # Enriquecimento
+    llm_error: str | None = None
 
     @classmethod
     def from_record(cls, book: BookRecord) -> "BookResponse":
@@ -132,6 +137,7 @@ class BookResponse(BaseModel):
             solo_friendly=book.solo_friendly,
             review=book.review,
             score=book.score,
+            llm_error=book.llm_error,
         )
 
 

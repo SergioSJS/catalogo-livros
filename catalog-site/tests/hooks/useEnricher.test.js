@@ -9,7 +9,8 @@ vi.useFakeTimers({ shouldAdvanceTime: true })
 
 const server = setupServer(
   http.get('/api/enrich/status', () => HttpResponse.json(STATUS_ENRICH_IDLE)),
-  http.post('/api/enrich', () => HttpResponse.json({ job_id: 'enr-001', status: 'started' }, { status: 202 }))
+  http.post('/api/enrich', () => HttpResponse.json({ job_id: 'enr-001', status: 'started' }, { status: 202 })),
+  http.get('/api/enrich/failed-count', () => HttpResponse.json({ count: 0 }))
 )
 beforeAll(() => server.listen())
 afterEach(() => { server.resetHandlers(); vi.clearAllTimers() })
@@ -53,5 +54,37 @@ describe('useEnricher', () => {
       expect(calls).toBeGreaterThanOrEqual(3)
     })
     expect(result.current.isEnriching).toBe(false)
+  })
+
+  it('exposes failedCount from /api/enrich/failed-count', async () => {
+    server.use(http.get('/api/enrich/failed-count', () => HttpResponse.json({ count: 5 })))
+    const { result } = renderHook(() => useEnricher())
+    await waitFor(() => expect(result.current.failedCount).toBe(5))
+  })
+
+  it('startEnrichRetry posts retry_failed: true', async () => {
+    let body = null
+    server.use(
+      http.post('/api/enrich', async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json({ job_id: 'enr-002', status: 'started' }, { status: 202 })
+      })
+    )
+    const { result } = renderHook(() => useEnricher())
+    await act(() => result.current.startEnrichRetry())
+    expect(body).toMatchObject({ retry_failed: true })
+  })
+
+  it('failedCount refreshes after enrichment completes', async () => {
+    let failCount = 3
+    server.use(
+      http.get('/api/enrich/failed-count', () => HttpResponse.json({ count: failCount })),
+      http.get('/api/enrich/status', () => {
+        failCount = 0
+        return HttpResponse.json(STATUS_ENRICH_IDLE)
+      })
+    )
+    const { result } = renderHook(() => useEnricher())
+    await waitFor(() => expect(result.current.failedCount).toBe(0))
   })
 })

@@ -68,7 +68,9 @@ class Database:
                     played_status   TEXT DEFAULT 'unplayed',
                     solo_friendly   INTEGER DEFAULT 0,
                     review          TEXT,
-                    score           INTEGER
+                    score           INTEGER,
+                    llm_error       TEXT,
+                    llm_retries     INTEGER DEFAULT 0
                 );
 
                 CREATE INDEX IF NOT EXISTS idx_books_language ON books(language);
@@ -116,6 +118,8 @@ class Database:
             ("solo_friendly", "INTEGER DEFAULT 0"),
             ("review",        "TEXT"),
             ("score",         "INTEGER"),
+            ("llm_error",     "TEXT"),
+            ("llm_retries",   "INTEGER DEFAULT 0"),
         ]
         with self._connect() as conn:
             existing = {row[1] for row in conn.execute("PRAGMA table_info(books)").fetchall()}
@@ -301,6 +305,22 @@ class Database:
                 (*fields.values(), file_hash),
             )
 
+    def set_llm_error(self, file_hash: str, error: str) -> None:
+        """Records an LLM enrichment error and increments llm_retries."""
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE books SET llm_error=?, llm_retries=COALESCE(llm_retries,0)+1, updated_at=? WHERE file_hash=?",
+                (error, datetime.now(timezone.utc).isoformat(), file_hash),
+            )
+
+    def clear_llm_error(self, file_hash: str) -> None:
+        """Clears llm_error after successful enrichment."""
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE books SET llm_error=NULL, updated_at=? WHERE file_hash=?",
+                (datetime.now(timezone.utc).isoformat(), file_hash),
+            )
+
     def clear_scan_log(self) -> None:
         with self._connect() as conn:
             conn.execute("DELETE FROM scan_log")
@@ -346,6 +366,7 @@ class Database:
         categories_not: list[str] | None = None,
         genres_not: list[str] | None = None,
         tags_not: list[str] | None = None,
+        has_llm_error: bool | None = None,
     ) -> tuple[list[BookRecord], int]:
         order = _SORT_MAP.get(sort, "b.title ASC")
         offset = (page - 1) * per_page
@@ -444,6 +465,11 @@ class Database:
                     "NOT EXISTS (SELECT 1 FROM json_each(b.custom_tags) WHERE json_each.value = ?)"
                 )
                 params.append(t)
+
+        if has_llm_error is True:
+            conditions.append("b.llm_error IS NOT NULL")
+        elif has_llm_error is False:
+            conditions.append("b.llm_error IS NULL")
 
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
@@ -644,4 +670,6 @@ def _row_to_book(row: sqlite3.Row) -> BookRecord:
         solo_friendly=bool(row["solo_friendly"]),
         review=row["review"],
         score=row["score"],
+        llm_error=row["llm_error"] if "llm_error" in row.keys() else None,
+        llm_retries=row["llm_retries"] if "llm_retries" in row.keys() else 0,
     )
