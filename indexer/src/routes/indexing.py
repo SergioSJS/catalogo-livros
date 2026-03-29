@@ -1,6 +1,7 @@
 """Endpoints de indexação: POST /api/index, GET /api/index/status, GET /api/health."""
 from __future__ import annotations
 
+import os
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -153,7 +154,7 @@ def index_status():
     return get_indexing_state()
 
 
-BACKEND_VERSION = "0.2.0"
+BACKEND_VERSION = os.environ.get("APP_VERSION", "dev")
 
 
 @router.get("/health")

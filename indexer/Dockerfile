@@ -20,6 +20,9 @@ COPY config.yaml .
 # Instala o projeto
 RUN uv sync --no-dev
 
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 EXPOSE 8564
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

@@ -12,7 +12,7 @@ import { Pagination } from './components/Pagination.jsx'
 import { IndexingPanel } from './components/IndexingPanel.jsx'
 import { fetchRandomBook, fetchVersion } from './api/client.js'
 
-const FRONTEND_VERSION = '0.2.0'
+const FRONTEND_VERSION = import.meta.env.VITE_APP_VERSION ?? 'dev'
 
 const SORT_OPTIONS = [
   { value: 'title_asc', label: 'Title A–Z' },

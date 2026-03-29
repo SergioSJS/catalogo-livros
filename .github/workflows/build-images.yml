@@ -35,6 +35,8 @@ jobs:
           tags: |
             ${{ steps.vars.outputs.prefix }}/indexer:latest
             ${{ steps.vars.outputs.prefix }}/indexer:${{ github.sha }}
+          build-args: |
+            APP_VERSION=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -46,5 +48,7 @@ jobs:
           tags: |
             ${{ steps.vars.outputs.prefix }}/catalog:latest
             ${{ steps.vars.outputs.prefix }}/catalog:${{ github.sha }}
+          build-args: |
+            VITE_APP_VERSION=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
