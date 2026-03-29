@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response, StreamingResponse
 
 from src.database import Database
-from src.models import BookDetail, BookResponse, BookMetadataUpdate, FacetsResponse, PaginatedBooks, StatsResponse, PersonalFieldsUpdate
+from src.models import BookDetail, BookResponse, BookMetadataUpdate, BulkPersonalFieldsUpdate, FacetsResponse, PaginatedBooks, StatsResponse, PersonalFieldsUpdate
 
 router = APIRouter(prefix="/api")
 
@@ -146,6 +146,48 @@ def get_facets(
         genres=genre or None,
         folder=folder,
     )
+
+
+@router.patch("/books/bulk")
+def bulk_update_personal_fields(
+    body: BulkPersonalFieldsUpdate,
+    db: Annotated[Database, Depends(_get_db)],
+):
+    if not body.file_hashes:
+        return {"updated": 0}
+
+    personal = body.fields.model_dump(exclude_unset=True) if body.fields else {}
+    add_tags = {k: v for k, v in (body.add_tags or {}).items() if k in {"system_tags", "category_tags", "genre_tags", "custom_tags"}}
+    remove_tags = {k: v for k, v in (body.remove_tags or {}).items() if k in {"system_tags", "category_tags", "genre_tags", "custom_tags"}}
+
+    updated = 0
+    for file_hash in body.file_hashes:
+        book = db.get_book(file_hash)
+        if not book:
+            continue
+        did_something = False
+        if personal:
+            db.update_personal_fields(file_hash, **personal)
+            did_something = True
+        if add_tags or remove_tags:
+            tag_updates = {}
+            for field in {"system_tags", "category_tags", "genre_tags", "custom_tags"}:
+                current = list(getattr(book, field))
+                if field in add_tags:
+                    for t in add_tags[field]:
+                        if t not in current:
+                            current.append(t)
+                if field in remove_tags:
+                    current = [t for t in current if t not in remove_tags[field]]
+                # Only include if the field was touched
+                if field in add_tags or field in remove_tags:
+                    tag_updates[field] = current
+            if tag_updates:
+                db.update_book_metadata(file_hash, **tag_updates)
+                did_something = True
+        if did_something:
+            updated += 1
+    return {"updated": updated}
 
 
 @router.patch("/books/{file_hash}/personal", response_model=BookResponse)

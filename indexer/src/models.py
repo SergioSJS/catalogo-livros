@@ -231,6 +231,16 @@ class PersonalFieldsUpdate(BaseModel):
     score: int | None = Field(default=None, ge=1, le=5)
 
 
+_TAG_FIELDS = {"system_tags", "category_tags", "genre_tags", "custom_tags"}
+
+
+class BulkPersonalFieldsUpdate(BaseModel):
+    file_hashes: list[str]
+    fields: PersonalFieldsUpdate | None = None
+    add_tags: dict[str, list[str]] | None = None   # {"system_tags": ["OSR"]}
+    remove_tags: dict[str, list[str]] | None = None  # {"custom_tags": ["old"]}
+
+
 class IndexStatusResponse(BaseModel):
     status: str
     current_job: str | None

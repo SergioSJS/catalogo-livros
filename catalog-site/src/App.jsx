@@ -11,7 +11,8 @@ import { FilterSidebar } from './components/FilterSidebar.jsx'
 import { SearchBar } from './components/SearchBar.jsx'
 import { Pagination } from './components/Pagination.jsx'
 import { IndexingPanel } from './components/IndexingPanel.jsx'
-import { fetchRandomBook, fetchVersion, buildExportUrl } from './api/client.js'
+import { BulkActionBar } from './components/BulkActionBar.jsx'
+import { fetchRandomBook, fetchVersion, buildExportUrl, patchBooksBulk } from './api/client.js'
 
 const FRONTEND_VERSION = import.meta.env.VITE_APP_VERSION ?? 'dev'
 
@@ -34,6 +35,9 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [pendingNav, setPendingNav] = useState(null) // 'first' | 'last'
   const [backendVersion, setBackendVersion] = useState(null)
+  const [bulkMode, setBulkMode] = useState(false)
+  const [selectedHashes, setSelectedHashes] = useState(new Set())
+  const [bulkSaving, setBulkSaving] = useState(false)
 
   const { dark, toggle: toggleDark } = useDarkMode()
   const { filters, toggleSystem, toggleCategory, toggleGenre, toggleExcludeSystem, toggleExcludeCategory, toggleExcludeGenre, setLanguage, setFolder, setSort, setReadStatus, setPlayedStatus, setSoloFriendly, setScoreMin, reset, toParams } = useFilters()
@@ -72,6 +76,37 @@ export default function App() {
   function handleSearch(val) { setInput(val); setPage(1) }
   function handleFilterChange(fn) {
     return (...args) => { fn(...args); setPage(1) }
+  }
+
+  function toggleSelect(hash) {
+    setSelectedHashes(prev => {
+      const next = new Set(prev)
+      if (next.has(hash)) next.delete(hash)
+      else next.add(hash)
+      return next
+    })
+  }
+
+  async function handleBulkApply(payload) {
+    // payload: { fields?: {...}, add_tags?: {...}, remove_tags?: {...} }
+    if (selectedHashes.size === 0) return
+    setBulkSaving(true)
+    try {
+      await patchBooksBulk([...selectedHashes], payload)
+      // Optimistically update bookUpdates for personal fields only (tags need reload)
+      if (payload.fields) {
+        setBookUpdates(prev => {
+          const next = { ...prev }
+          for (const hash of selectedHashes) {
+            const existing = next[hash] ?? displayItems.find(b => b.file_hash === hash)
+            if (existing) next[hash] = { ...existing, ...payload.fields }
+          }
+          return next
+        })
+      }
+      setSelectedHashes(new Set())
+    } catch {}
+    setBulkSaving(false)
   }
 
   async function handleRandomBook() {
@@ -126,6 +161,12 @@ export default function App() {
           <button className="dark-toggle" onClick={toggleDark} aria-label={dark ? 'Modo claro' : 'Modo escuro'} title={dark ? 'Modo claro' : 'Modo escuro'}>
             {dark ? '☀' : '🌙'}
           </button>
+          <button
+            className={`bulk-toggle${bulkMode ? ' bulk-toggle-active' : ''}`}
+            onClick={() => { setBulkMode(m => !m); setSelectedHashes(new Set()) }}
+            aria-label="Edição em massa"
+            title="Edição em massa"
+          >☑</button>
           <IndexingPanel indexer={indexer} onStart={() => indexer.startIndex()} />
         </div>
         <div className="header-row2">
@@ -188,10 +229,27 @@ export default function App() {
             <Pagination page={page} totalPages={pagination.total_pages} onPage={setPage} />
           )}
 
-          <BookGrid books={displayItems} loading={loading} onSelect={(b, idx) => {
-            setSelectedBook(bookUpdates[b.file_hash] ?? b)
-            setSelectedBookIndex(idx)
-          }} />
+          {bulkMode && (
+            <BulkActionBar
+              selectedCount={selectedHashes.size}
+              onApply={handleBulkApply}
+              onClearSelection={() => setSelectedHashes(new Set())}
+              onExitBulk={() => { setBulkMode(false); setSelectedHashes(new Set()) }}
+              saving={bulkSaving}
+            />
+          )}
+
+          <BookGrid
+            books={displayItems}
+            loading={loading}
+            onSelect={(b, idx) => {
+              setSelectedBook(bookUpdates[b.file_hash] ?? b)
+              setSelectedBookIndex(idx)
+            }}
+            selectMode={bulkMode}
+            selectedHashes={selectedHashes}
+            onToggleSelect={toggleSelect}
+          />
 
           {pagination && pagination.total_pages > 1 && (
             <Pagination page={page} totalPages={pagination.total_pages} onPage={setPage} />

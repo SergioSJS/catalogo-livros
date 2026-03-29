@@ -118,6 +118,15 @@ export function patchPersonalFields(hash, fields) {
   })
 }
 
+export function patchBooksBulk(file_hashes, payload) {
+  // payload: { fields?, add_tags?, remove_tags? }
+  return apiFetch('/api/books/bulk', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file_hashes, ...payload }),
+  })
+}
+
 export function buildExportUrl(format, { language, systems = [], categories = [], genres = [], folder, read_status, played_status, solo_friendly, score_min } = {}) {
   const url = new URL('/api/export', window?.location?.origin ?? 'http://localhost')
   url.searchParams.set('format', format)

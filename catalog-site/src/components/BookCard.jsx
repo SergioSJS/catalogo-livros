@@ -1,10 +1,19 @@
 const LANG_LABEL = { en: 'EN', pt: 'PT' }
 
-export function BookCard({ book, onSelect }) {
+export function BookCard({ book, onSelect, selectMode = false, selected = false, onToggleSelect }) {
   const { title, language, system_tags, category_tags, genre_tags, page_count, thumbnail_url, parent_folder, score } = book
 
+  function handleClick() {
+    if (selectMode) onToggleSelect?.(book.file_hash)
+    else onSelect(book)
+  }
+
   return (
-    <button onClick={() => onSelect(book)} className="book-card">
+    <button
+      onClick={handleClick}
+      className={`book-card${selected ? ' book-card-selected' : ''}`}
+      aria-pressed={selectMode ? selected : undefined}
+    >
       <div className="card-thumb-wrap">
         {thumbnail_url ? (
           <img src={thumbnail_url} alt={title} className="card-thumb" />
@@ -14,6 +23,11 @@ export function BookCard({ book, onSelect }) {
             alt={title}
             className="card-thumb"
           />
+        )}
+        {selectMode && (
+          <span className={`card-checkbox${selected ? ' card-checkbox-checked' : ''}`} aria-hidden="true">
+            {selected ? '✓' : ''}
+          </span>
         )}
         {language && (
           <span className="card-lang">{LANG_LABEL[language] ?? language.toUpperCase()}</span>

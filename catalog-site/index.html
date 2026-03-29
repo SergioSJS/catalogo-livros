@@ -443,6 +443,73 @@
     }
     .export-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--bg-subtle); }
 
+    /* ── Bulk Selection ─────────────────────────────────────────── */
+    .book-card-selected { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .card-checkbox {
+      position: absolute; top: 6px; left: 6px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: rgba(255,255,255,.85); border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--accent);
+      z-index: 2;
+    }
+    .card-checkbox-checked { background: var(--accent); color: #fff; }
+    .bulk-toggle {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer;
+      color: #fff; font-size: 15px; line-height: 1;
+      transition: background .15s; flex-shrink: 0;
+    }
+    .bulk-toggle:hover { background: rgba(255,255,255,.28); }
+    .bulk-toggle-active { background: var(--accent); border-color: var(--accent); }
+    .bulk-bar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      background: var(--bg-subtle); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+    }
+    .bulk-count { font-size: 13px; font-weight: 700; color: var(--primary); }
+    .bulk-clear {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-muted); font-size: 14px; line-height: 1;
+      padding: 2px 4px;
+    }
+    .bulk-clear:hover { color: #b33; }
+    .bulk-controls { display: flex; gap: 6px; align-items: center; flex: 1; flex-wrap: wrap; }
+    .bulk-select {
+      font-size: 13px; padding: 5px 8px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text); cursor: pointer;
+    }
+    .bulk-apply-btn {
+      padding: 5px 14px; border-radius: 6px; border: none;
+      background: var(--primary); color: #fff;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: background .15s;
+    }
+    .bulk-apply-btn:hover:not(:disabled) { background: var(--primary-hover); }
+    .bulk-apply-btn:disabled { opacity: .6; cursor: default; }
+    .bulk-exit {
+      font-size: 12px; padding: 4px 10px; border-radius: 6px;
+      border: 1px solid var(--border); background: none;
+      color: var(--text-muted); cursor: pointer;
+      margin-left: auto;
+    }
+    .bulk-exit:hover { color: var(--text); border-color: var(--text-mid); }
+    .bulk-mode-tabs { display: flex; gap: 2px; }
+    .bulk-tab {
+      font-size: 12px; padding: 3px 8px; border-radius: 6px;
+      border: 1px solid var(--border); background: none;
+      color: var(--text-mid); cursor: pointer; transition: all .1s;
+    }
+    .bulk-tab:hover { border-color: var(--primary); color: var(--primary); }
+    .bulk-tab-active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .bulk-tag-input {
+      flex: 1; min-width: 100px; font-size: 13px; padding: 5px 8px;
+      border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text);
+    }
+    .bulk-tag-input:focus { outline: none; border-color: var(--primary); }
+
     /* ── Dark Mode Toggle ───────────────────────────────────────── */
     .dark-toggle {
       background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);

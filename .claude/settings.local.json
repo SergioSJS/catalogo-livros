@@ -44,7 +44,17 @@
       "Bash(THUMBNAIL_DIR=/tmp/test_thumbs DATA_DIR=/tmp/test_data uv run pytest tests/test_api_catalog.py::test_filter_exclude_system -x)",
       "Bash(DB_PATH=/tmp/test.db uv run pytest tests/test_api_catalog.py::test_list_books_default_pagination -x)",
       "Bash(/Users/sergio.sousa/Projects/person/catalogo-livros/indexer/tests/test_database.py:*)",
-      "Bash(.venv/bin/pytest tests/test_database.py)"
+      "Bash(.venv/bin/pytest tests/test_database.py)",
+      "Bash(ssh sergio@zimaos \"cd /DATA/AppData/casaos/apps/rpg-catalog && docker compose pull && docker compose up -d 2>&1\")",
+      "Bash(python -m pytest --tb=short -q)",
+      "Bash(python3 -m pytest --tb=short -q)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(.venv/bin/pytest --tb=short -q)",
+      "Bash(.venv/bin/pytest --tb=short -q --ignore=tests/test_api_catalog.py --ignore=tests/test_api_indexing.py)",
+      "WebSearch",
+      "WebFetch(domain:containrrr.dev)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://ghcr.io/v2/sergiosjs/catalogo-livros/catalog/manifests/latest)"
     ]
   }
 }

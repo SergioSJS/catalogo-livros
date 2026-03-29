@@ -4,7 +4,7 @@ function SkeletonCard() {
   return <div role="status" aria-label="Loading" className="skeleton" style={{ height: 280 }} />
 }
 
-export function BookGrid({ books, loading, onSelect }) {
+export function BookGrid({ books, loading, onSelect, selectMode = false, selectedHashes = new Set(), onToggleSelect }) {
   if (loading) {
     return (
       <div className="book-grid">
@@ -24,7 +24,14 @@ export function BookGrid({ books, loading, onSelect }) {
   return (
     <div className="book-grid">
       {books.map((book, idx) => (
-        <BookCard key={book.file_hash} book={book} onSelect={b => onSelect(b, idx)} />
+        <BookCard
+          key={book.file_hash}
+          book={book}
+          onSelect={b => onSelect(b, idx)}
+          selectMode={selectMode}
+          selected={selectedHashes.has(book.file_hash)}
+          onToggleSelect={onToggleSelect}
+        />
       ))}
     </div>
   )

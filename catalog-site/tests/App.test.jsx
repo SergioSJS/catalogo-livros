@@ -16,6 +16,7 @@ vi.mock('../src/hooks/useIndexer.js', () => ({
 vi.mock('../src/api/client.js', () => ({
   patchPersonalFields: vi.fn(),
   patchBookMetadata: vi.fn(),
+  patchBooksBulk: vi.fn().mockResolvedValue({ updated: 0 }),
   fetchRandomBook: vi.fn().mockResolvedValue({}),
   fetchVersion: vi.fn().mockResolvedValue({ version: '0.2.0' }),
   buildExportUrl: vi.fn(() => '/api/export?format=json'),

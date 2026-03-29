@@ -375,3 +375,130 @@ def test_filter_include_and_exclude_combined(seeded_client):
     items = r.json()["items"]
     assert all("OSR" in b["system_tags"] for b in items)
     assert all("Fantasy" not in b["genre_tags"] for b in items)
+
+
+# ── PATCH /api/books/bulk ─────────────────────────────────────────────────────
+
+def test_bulk_edit_read_status(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_a", "hash_b"],
+        "fields": {"read_status": "read"},
+    })
+    assert r.status_code == 200
+    data = r.json()
+    assert data["updated"] == 2
+    # Verify persistence
+    assert seeded_client.get("/api/books/hash_a").json()["read_status"] == "read"
+    assert seeded_client.get("/api/books/hash_b").json()["read_status"] == "read"
+    # Untouched book unchanged
+    assert seeded_client.get("/api/books/hash_c").json()["read_status"] == "unread"
+
+
+def test_bulk_edit_score(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_a", "hash_c", "hash_d"],
+        "fields": {"score": 4},
+    })
+    assert r.status_code == 200
+    assert r.json()["updated"] == 3
+    assert seeded_client.get("/api/books/hash_a").json()["score"] == 4
+
+
+def test_bulk_edit_solo_friendly(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_b"],
+        "fields": {"solo_friendly": True},
+    })
+    assert r.status_code == 200
+    assert seeded_client.get("/api/books/hash_b").json()["solo_friendly"] is True
+
+
+def test_bulk_edit_empty_hashes_returns_zero(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": [],
+        "fields": {"read_status": "read"},
+    })
+    assert r.status_code == 200
+    assert r.json()["updated"] == 0
+
+
+def test_bulk_edit_unknown_hashes_ignored(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["nonexistent_1", "nonexistent_2"],
+        "fields": {"read_status": "read"},
+    })
+    assert r.status_code == 200
+    assert r.json()["updated"] == 0
+
+
+def test_bulk_edit_invalid_field_returns_422(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_a"],
+        "fields": {"read_status": "bad_value"},
+    })
+    assert r.status_code == 422
+
+
+def test_bulk_edit_mixed_known_unknown_hashes(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_a", "nonexistent"],
+        "fields": {"read_status": "read"},
+    })
+    assert r.status_code == 200
+    assert r.json()["updated"] == 1
+
+
+def test_bulk_add_tags(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_a", "hash_d"],
+        "add_tags": {"custom_tags": ["favorito"]},
+    })
+    assert r.status_code == 200
+    assert r.json()["updated"] == 2
+    assert "favorito" in seeded_client.get("/api/books/hash_a").json()["custom_tags"]
+    assert "favorito" in seeded_client.get("/api/books/hash_d").json()["custom_tags"]
+
+
+def test_bulk_add_tags_no_duplicate(seeded_client):
+    # hash_a already has OSR in system_tags
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_a"],
+        "add_tags": {"system_tags": ["OSR"]},
+    })
+    assert r.status_code == 200
+    tags = seeded_client.get("/api/books/hash_a").json()["system_tags"]
+    assert tags.count("OSR") == 1
+
+
+def test_bulk_remove_tags(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_a", "hash_d"],
+        "remove_tags": {"system_tags": ["OSR"]},
+    })
+    assert r.status_code == 200
+    assert r.json()["updated"] == 2
+    assert "OSR" not in seeded_client.get("/api/books/hash_a").json()["system_tags"]
+    assert "OSR" not in seeded_client.get("/api/books/hash_d").json()["system_tags"]
+
+
+def test_bulk_remove_tags_noop_if_not_present(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_b"],
+        "remove_tags": {"system_tags": ["OSR"]},  # hash_b has PbtA not OSR
+    })
+    assert r.status_code == 200
+    assert r.json()["updated"] == 1  # still counts as updated (operation ran)
+    # PbtA still there
+    assert "PbtA" in seeded_client.get("/api/books/hash_b").json()["system_tags"]
+
+
+def test_bulk_add_and_personal_together(seeded_client):
+    r = seeded_client.patch("/api/books/bulk", json={
+        "file_hashes": ["hash_a"],
+        "fields": {"read_status": "read"},
+        "add_tags": {"custom_tags": ["novo"]},
+    })
+    assert r.status_code == 200
+    data = seeded_client.get("/api/books/hash_a").json()
+    assert data["read_status"] == "read"
+    assert "novo" in data["custom_tags"]
