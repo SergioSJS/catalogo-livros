@@ -39,6 +39,7 @@ export default function App() {
   const [pendingNav, setPendingNav] = useState(null) // 'first' | 'last'
   const [backendVersion, setBackendVersion] = useState(null)
   const [showStats, setShowStats] = useState(false)
+  const [showGear, setShowGear] = useState(false)
   const [bulkMode, setBulkMode] = useState(false)
   const [selectedHashes, setSelectedHashes] = useState(new Set())
   const [bulkSaving, setBulkSaving] = useState(false)
@@ -163,23 +164,36 @@ export default function App() {
           <button className="filter-toggle" onClick={() => setDrawerOpen(true)}>
             ☰ Filters
           </button>
-          <button className="dark-toggle" onClick={toggleDark} aria-label={dark ? 'Modo claro' : 'Modo escuro'} title={dark ? 'Modo claro' : 'Modo escuro'}>
-            {dark ? '☀' : '🌙'}
-          </button>
+
+          {/* Gear menu — desktop: inline row; mobile: hidden until gear clicked */}
+          <div className={`header-actions${showGear ? ' header-actions-open' : ''}`}>
+            <button className="dark-toggle" onClick={toggleDark} aria-label={dark ? 'Modo claro' : 'Modo escuro'} title={dark ? 'Modo claro' : 'Modo escuro'}>
+              {dark ? '☀' : '🌙'}
+            </button>
+            <button
+              className={`bulk-toggle${showStats ? ' bulk-toggle-active' : ''}`}
+              onClick={() => { setShowStats(s => !s); setShowGear(false) }}
+              aria-label="Estatísticas"
+              title="Estatísticas da coleção"
+            >📊</button>
+            <button
+              className={`bulk-toggle${bulkMode ? ' bulk-toggle-active' : ''}`}
+              onClick={() => { setBulkMode(m => !m); setSelectedHashes(new Set()); setShowGear(false) }}
+              aria-label="Edição em massa"
+              title="Edição em massa"
+            >☑</button>
+            <EnrichingPanel enricher={enricher} onStart={() => { enricher.startEnrich(); setShowGear(false) }} />
+            <IndexingPanel indexer={indexer} onStart={() => { indexer.startIndex(); setShowGear(false) }} />
+          </div>
+
+          {/* Gear toggle — only visible on mobile */}
+          {showGear && <div className="gear-overlay" onClick={() => setShowGear(false)} />}
           <button
-            className={`bulk-toggle${showStats ? ' bulk-toggle-active' : ''}`}
-            onClick={() => setShowStats(s => !s)}
-            aria-label="Estatísticas"
-            title="Estatísticas da coleção"
-          >📊</button>
-          <button
-            className={`bulk-toggle${bulkMode ? ' bulk-toggle-active' : ''}`}
-            onClick={() => { setBulkMode(m => !m); setSelectedHashes(new Set()) }}
-            aria-label="Edição em massa"
-            title="Edição em massa"
-          >☑</button>
-          <EnrichingPanel enricher={enricher} onStart={() => enricher.startEnrich()} />
-          <IndexingPanel indexer={indexer} onStart={() => indexer.startIndex()} />
+            className="gear-btn"
+            onClick={() => setShowGear(g => !g)}
+            aria-label="Configurações"
+            title="Configurações"
+          >⚙</button>
         </div>
         <div className="header-row2">
           <SearchBar value={inputValue} onChange={handleSearch} onClear={() => { clear(); setPage(1) }} />
