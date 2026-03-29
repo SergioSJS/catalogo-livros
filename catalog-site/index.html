@@ -17,11 +17,24 @@
       --accent-hover: #b07c2e;
       --bg: #f2ece4;
       --bg-card: #fff;
+      --bg-subtle: #f7f1ea;
+      --bg-hover: #ede6dc;
       --border: #ddd6cb;
       --border-light: #e8e2d9;
       --text: #2a2018;
       --text-mid: #5a4a3a;
       --text-muted: #9a8878;
+    }
+    [data-theme="dark"] {
+      --bg: #1c1710;
+      --bg-card: #26211a;
+      --bg-subtle: #211c15;
+      --bg-hover: #2d2720;
+      --border: #3d3428;
+      --border-light: #302820;
+      --text: #e8e0d4;
+      --text-mid: #b0a090;
+      --text-muted: #786860;
     }
     body { font-family: 'Source Sans 3', system-ui, sans-serif; background: var(--bg); color: var(--text); }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
@@ -54,7 +67,7 @@
       padding: 20px 16px 40px;
       border-right: 1px solid var(--border);
       min-height: calc(100vh - 56px);
-      background: #f7f1ea;
+      background: var(--bg-subtle);
     }
     .main { flex: 1; min-width: 0; padding: 20px 24px 40px; }
 
@@ -156,7 +169,7 @@
       padding: 3px 6px; cursor: pointer; font-size: 13px;
       border-radius: 6px; transition: background .1s;
     }
-    .facet-item:hover { background: #ede6dc; }
+    .facet-item:hover { background: var(--bg-hover); }
     .facet-item input { accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
     .facet-name { flex: 1; color: var(--text-mid); }
     .facet-count { font-size: 11px; color: var(--text-muted); }
@@ -232,7 +245,7 @@
       background: var(--bg-card); cursor: pointer; font-size: 13px; color: var(--text-mid);
       transition: background .1s;
     }
-    .page-btn:hover:not(:disabled) { background: #ede6dc; border-color: var(--primary); }
+    .page-btn:hover:not(:disabled) { background: var(--bg-hover); border-color: var(--primary); }
     .page-btn:disabled { color: #ccc; cursor: default; }
     .page-info { font-size: 13px; color: var(--text-muted); min-width: 80px; text-align: center; }
 
@@ -273,7 +286,7 @@
       padding: 10px 12px;
       border-bottom: 1px solid var(--border-light);
       border-radius: 16px 16px 0 0;
-      background: #faf6f0;
+      background: var(--bg-subtle);
       min-height: 52px;
     }
     .modal-nav-arrow {
@@ -311,7 +324,7 @@
     .modal-meta strong { color: var(--text-mid); }
     .modal-path {
       display: flex; align-items: baseline; gap: 8px;
-      background: #f7f1ea; border-radius: 8px; padding: 6px 10px;
+      background: var(--bg-subtle); border-radius: 8px; padding: 6px 10px;
       margin-bottom: 4px;
     }
     .modal-path-label {
@@ -340,7 +353,7 @@
     .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
     .status-btn {
       font-size: 12px; padding: 4px 10px; border-radius: 20px;
-      border: 1px solid var(--border); background: #faf6f0; cursor: pointer;
+      border: 1px solid var(--border); background: var(--bg-subtle); cursor: pointer;
       color: var(--text-mid); transition: all .1s;
     }
     .status-btn:hover { border-color: var(--primary); color: var(--primary); }
@@ -356,7 +369,7 @@
     .review-input {
       width: 100%; border: 1px solid var(--border); border-radius: 8px;
       padding: 8px 12px; font-size: 13px; font-family: inherit;
-      resize: vertical; color: var(--text); background: #faf6f0;
+      resize: vertical; color: var(--text); background: var(--bg-subtle);
     }
     .review-input:focus { outline: none; border-color: var(--primary); }
     .save-btn {
@@ -402,11 +415,11 @@
       background: var(--bg-card); color: var(--text-mid); font-size: 14px; cursor: pointer;
       transition: background .1s;
     }
-    .cancel-btn:hover { background: #ede6dc; }
+    .cancel-btn:hover { background: var(--bg-hover); }
     .chip-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
     .chip {
       display: inline-flex; align-items: center; gap: 4px;
-      background: #ede6dc; border-radius: 20px;
+      background: var(--bg-hover); border-radius: 20px;
       padding: 3px 10px; font-size: 12px; color: var(--text-mid);
     }
     .chip-remove { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 14px; line-height: 1; padding: 0; }
@@ -418,7 +431,26 @@
     .chip-add-btn:hover { background: var(--primary); color: #fff; }
 
     /* ── Skeleton ────────────────────────────────────────────────── */
-    .skeleton { background: #ddd6cb; border-radius: 12px; animation: pulse 1.4s ease-in-out infinite; }
+    .skeleton { background: var(--border); border-radius: 12px; animation: pulse 1.4s ease-in-out infinite; }
+
+    /* ── Export ─────────────────────────────────────────────────── */
+    .export-wrap { display: flex; gap: 4px; }
+    .export-btn {
+      font-size: 11px; padding: 4px 9px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text-mid); text-decoration: none; white-space: nowrap;
+      transition: all .12s;
+    }
+    .export-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--bg-subtle); }
+
+    /* ── Dark Mode Toggle ───────────────────────────────────────── */
+    .dark-toggle {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer;
+      color: #fff; font-size: 15px; line-height: 1;
+      transition: background .15s; flex-shrink: 0;
+    }
+    .dark-toggle:hover { background: rgba(255,255,255,.28); }
 
     /* ── MOBILE ─────────────────────────────────────────────────── */
     @media (max-width: 720px) {

@@ -117,3 +117,18 @@ export function patchPersonalFields(hash, fields) {
     body: JSON.stringify(fields),
   })
 }
+
+export function buildExportUrl(format, { language, systems = [], categories = [], genres = [], folder, read_status, played_status, solo_friendly, score_min } = {}) {
+  const url = new URL('/api/export', window?.location?.origin ?? 'http://localhost')
+  url.searchParams.set('format', format)
+  if (language) url.searchParams.set('language', language)
+  if (folder) url.searchParams.set('folder', folder)
+  if (read_status) url.searchParams.set('read_status', read_status)
+  if (played_status) url.searchParams.set('played_status', played_status)
+  if (solo_friendly != null) url.searchParams.set('solo_friendly', String(solo_friendly))
+  if (score_min != null) url.searchParams.set('score_min', score_min)
+  systems.forEach(s => url.searchParams.append('system', s))
+  categories.forEach(c => url.searchParams.append('category', c))
+  genres.forEach(g => url.searchParams.append('genre', g))
+  return url.pathname + url.search
+}

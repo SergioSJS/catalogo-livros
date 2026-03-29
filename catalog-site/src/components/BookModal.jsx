@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { patchPersonalFields, patchBookMetadata } from '../api/client.js'
+import { useSwipe } from '../hooks/useSwipe.js'
 
 const LANG_LABEL = { en: 'English', pt: 'Português' }
 const READ_LABELS = { unread: 'Não lido', reading: 'Lendo', read: 'Lido' }
@@ -58,6 +59,12 @@ export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, has
     if (bookIndex < books.length - 1) onNavigate(bookIndex + 1)
     else onNavigate('next-page')
   }
+
+  // Swipe gestures on the modal box (mobile)
+  useSwipe(boxRef, {
+    onSwipeLeft: () => handleNext(),
+    onSwipeRight: () => handlePrev(),
+  })
 
   // Global keyboard handler — works regardless of what's focused inside
   useEffect(() => {

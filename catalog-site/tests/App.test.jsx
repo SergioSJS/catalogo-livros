@@ -18,6 +18,7 @@ vi.mock('../src/api/client.js', () => ({
   patchBookMetadata: vi.fn(),
   fetchRandomBook: vi.fn().mockResolvedValue({}),
   fetchVersion: vi.fn().mockResolvedValue({ version: '0.2.0' }),
+  buildExportUrl: vi.fn(() => '/api/export?format=json'),
 }))
 
 import { useBooks } from '../src/hooks/useBooks.js'

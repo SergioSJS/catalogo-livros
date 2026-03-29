@@ -1,10 +1,14 @@
 """Endpoints de catálogo: GET /api/books, /api/facets, /api/stats."""
 from __future__ import annotations
 
-from typing import Annotated
+import csv
+import io
+import json
+from datetime import datetime, timezone
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 
 from src.database import Database
 from src.models import BookDetail, BookResponse, BookMetadataUpdate, FacetsResponse, PaginatedBooks, StatsResponse, PersonalFieldsUpdate
@@ -176,5 +180,72 @@ def update_book_metadata(
 @router.get("/stats")
 def get_stats(db: Annotated[Database, Depends(_get_db)]):
     return db.get_stats()
+
+
+_EXPORT_FIELDS = [
+    "file_hash", "title", "language", "filename", "relative_path",
+    "parent_folder", "page_count", "file_size",
+    "system_tags", "category_tags", "genre_tags", "custom_tags",
+    "read_status", "played_status", "solo_friendly", "score", "review",
+    "llm_provider", "llm_confidence", "indexed_at",
+]
+
+
+@router.get("/export")
+def export_catalog(
+    db: Annotated[Database, Depends(_get_db)],
+    format: Literal["json", "csv"] = Query(...),
+    language: str | None = Query(None),
+    system: list[str] = Query(default=[]),
+    category: list[str] = Query(default=[]),
+    genre: list[str] = Query(default=[]),
+    folder: str | None = Query(None),
+    read_status: str | None = Query(None),
+    played_status: str | None = Query(None),
+    solo_friendly: bool | None = Query(None),
+    score_min: int | None = Query(None, ge=1, le=5),
+):
+    items, _ = db.list_books(
+        page=1,
+        per_page=100_000,
+        language=language,
+        systems=system or None,
+        categories=category or None,
+        genres=genre or None,
+        folder=folder,
+        read_status=read_status,
+        played_status=played_status,
+        solo_friendly=solo_friendly,
+        score_min=score_min,
+        sort="title_asc",
+    )
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+
+    if format == "json":
+        data = [{f: getattr(b, f) for f in _EXPORT_FIELDS} for b in items]
+        content = json.dumps(data, ensure_ascii=False, indent=2)
+        return Response(
+            content=content,
+            media_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="rpg-catalog-{timestamp}.json"'},
+        )
+
+    # CSV
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=_EXPORT_FIELDS)
+    writer.writeheader()
+    for b in items:
+        row = {f: getattr(b, f) for f in _EXPORT_FIELDS}
+        # Flatten lists to semicolon-separated strings
+        for f in ("system_tags", "category_tags", "genre_tags", "custom_tags"):
+            row[f] = ";".join(row[f]) if row[f] else ""
+        writer.writerow(row)
+
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="rpg-catalog-{timestamp}.csv"'},
+    )
 
 

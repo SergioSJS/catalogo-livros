@@ -313,6 +313,62 @@ def test_filter_exclude_genre(seeded_client):
     assert all("Fantasy" not in b["genre_tags"] for b in items)
 
 
+# ── GET /api/export ───────────────────────────────────────────────────────────
+
+def test_export_json_returns_all_books(seeded_client):
+    r = seeded_client.get("/api/export?format=json")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("application/json")
+    data = r.json()
+    assert isinstance(data, list)
+    assert len(data) == 4
+    assert all("title" in b for b in data)
+    assert all("file_hash" in b for b in data)
+
+
+def test_export_csv_returns_all_books(seeded_client):
+    r = seeded_client.get("/api/export?format=csv")
+    assert r.status_code == 200
+    assert "text/csv" in r.headers["content-type"]
+    lines = r.text.strip().splitlines()
+    assert len(lines) == 5  # header + 4 books
+    header = lines[0]
+    assert "title" in header
+    assert "file_hash" in header
+
+
+def test_export_json_respects_language_filter(seeded_client):
+    r = seeded_client.get("/api/export?format=json&language=pt")
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data) == 2
+    assert all(b["language"] == "pt" for b in data)
+
+
+def test_export_csv_respects_system_filter(seeded_client):
+    r = seeded_client.get("/api/export?format=csv&system=OSR")
+    assert r.status_code == 200
+    lines = r.text.strip().splitlines()
+    assert len(lines) == 3  # header + 2 OSR books
+
+
+def test_export_invalid_format_returns_422(seeded_client):
+    r = seeded_client.get("/api/export?format=xml")
+    assert r.status_code == 422
+
+
+def test_export_json_content_disposition(seeded_client):
+    r = seeded_client.get("/api/export?format=json")
+    assert "attachment" in r.headers.get("content-disposition", "")
+    assert ".json" in r.headers.get("content-disposition", "")
+
+
+def test_export_csv_content_disposition(seeded_client):
+    r = seeded_client.get("/api/export?format=csv")
+    assert "attachment" in r.headers.get("content-disposition", "")
+    assert ".csv" in r.headers.get("content-disposition", "")
+
+
 def test_filter_include_and_exclude_combined(seeded_client):
     # Include books with 'OSR', but exclude those with 'Fantasy' genre
     r = seeded_client.get("/api/books?system=OSR&genre_not=Fantasy")

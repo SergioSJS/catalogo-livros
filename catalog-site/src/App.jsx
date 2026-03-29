@@ -4,13 +4,14 @@ import { useSearch } from './hooks/useSearch.js'
 import { useBooks } from './hooks/useBooks.js'
 import { useFacets } from './hooks/useFacets.js'
 import { useIndexer } from './hooks/useIndexer.js'
+import { useDarkMode } from './hooks/useDarkMode.js'
 import { BookGrid } from './components/BookGrid.jsx'
 import { BookModal } from './components/BookModal.jsx'
 import { FilterSidebar } from './components/FilterSidebar.jsx'
 import { SearchBar } from './components/SearchBar.jsx'
 import { Pagination } from './components/Pagination.jsx'
 import { IndexingPanel } from './components/IndexingPanel.jsx'
-import { fetchRandomBook, fetchVersion } from './api/client.js'
+import { fetchRandomBook, fetchVersion, buildExportUrl } from './api/client.js'
 
 const FRONTEND_VERSION = import.meta.env.VITE_APP_VERSION ?? 'dev'
 
@@ -34,6 +35,7 @@ export default function App() {
   const [pendingNav, setPendingNav] = useState(null) // 'first' | 'last'
   const [backendVersion, setBackendVersion] = useState(null)
 
+  const { dark, toggle: toggleDark } = useDarkMode()
   const { filters, toggleSystem, toggleCategory, toggleGenre, toggleExcludeSystem, toggleExcludeCategory, toggleExcludeGenre, setLanguage, setFolder, setSort, setReadStatus, setPlayedStatus, setSoloFriendly, setScoreMin, reset, toParams } = useFilters()
   const { inputValue, q, setInput, clear } = useSearch()
   const indexer = useIndexer()
@@ -121,6 +123,9 @@ export default function App() {
           <button className="filter-toggle" onClick={() => setDrawerOpen(true)}>
             ☰ Filters
           </button>
+          <button className="dark-toggle" onClick={toggleDark} aria-label={dark ? 'Modo claro' : 'Modo escuro'} title={dark ? 'Modo claro' : 'Modo escuro'}>
+            {dark ? '☀' : '🌙'}
+          </button>
           <IndexingPanel indexer={indexer} onStart={() => indexer.startIndex()} />
         </div>
         <div className="header-row2">
@@ -162,6 +167,20 @@ export default function App() {
               >
                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
+            </div>
+            <div className="export-wrap">
+              <a
+                href={buildExportUrl('json', { language: filters.language, systems: filters.systems, categories: filters.categories, genres: filters.genres, folder: filters.folder, read_status: filters.read_status, played_status: filters.played_status, solo_friendly: filters.solo_friendly, score_min: filters.score_min })}
+                className="export-btn"
+                download
+                aria-label="Exportar JSON"
+              >⬇ JSON</a>
+              <a
+                href={buildExportUrl('csv', { language: filters.language, systems: filters.systems, categories: filters.categories, genres: filters.genres, folder: filters.folder, read_status: filters.read_status, played_status: filters.played_status, solo_friendly: filters.solo_friendly, score_min: filters.score_min })}
+                className="export-btn"
+                download
+                aria-label="Exportar CSV"
+              >⬇ CSV</a>
             </div>
           </div>
 
