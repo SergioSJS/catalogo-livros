@@ -153,6 +153,14 @@ def index_status():
     return get_indexing_state()
 
 
+BACKEND_VERSION = "0.2.0"
+
+
 @router.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "version": BACKEND_VERSION}
+
+
+@router.get("/version")
+def get_version():
+    return {"version": BACKEND_VERSION}

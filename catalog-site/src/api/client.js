@@ -56,6 +56,24 @@ export function fetchBook(hash) {
   return apiFetch(`/api/books/${hash}`)
 }
 
+export function fetchRandomBook({ language, systems = [], categories = [], genres = [], folder, read_status, played_status, solo_friendly, score_min } = {}) {
+  const url = new URL('/api/books/random', window?.location?.origin ?? 'http://localhost')
+  if (language) url.searchParams.set('language', language)
+  if (folder) url.searchParams.set('folder', folder)
+  if (read_status) url.searchParams.set('read_status', read_status)
+  if (played_status) url.searchParams.set('played_status', played_status)
+  if (solo_friendly != null) url.searchParams.set('solo_friendly', String(solo_friendly))
+  if (score_min != null) url.searchParams.set('score_min', score_min)
+  systems.forEach(s => url.searchParams.append('system', s))
+  categories.forEach(c => url.searchParams.append('category', c))
+  genres.forEach(g => url.searchParams.append('genre', g))
+  return apiFetch(url.pathname + url.search)
+}
+
+export function fetchVersion() {
+  return apiFetch('/api/version')
+}
+
 export function fetchFacets({ language, systems = [], categories = [], genres = [], folder } = {}) {
   const url = new URL('/api/facets', window?.location?.origin ?? 'http://localhost')
   if (language) url.searchParams.set('language', language)

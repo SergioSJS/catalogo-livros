@@ -74,6 +74,35 @@ def list_books(
     )
 
 
+@router.get("/books/random", response_model=BookResponse)
+def get_random_book_early(
+    db: Annotated[Database, Depends(_get_db)],
+    language: str | None = Query(None),
+    system: list[str] = Query(default=[]),
+    category: list[str] = Query(default=[]),
+    genre: list[str] = Query(default=[]),
+    folder: str | None = Query(None),
+    read_status: str | None = Query(None),
+    played_status: str | None = Query(None),
+    solo_friendly: bool | None = Query(None),
+    score_min: int | None = Query(None, ge=1, le=5),
+):
+    book = db.get_random_book(
+        language=language,
+        systems=system or None,
+        categories=category or None,
+        genres=genre or None,
+        folder=folder,
+        read_status=read_status,
+        played_status=played_status,
+        solo_friendly=solo_friendly,
+        score_min=score_min,
+    )
+    if not book:
+        raise HTTPException(status_code=404, detail="Nenhum livro encontrado")
+    return BookResponse.from_record(book)
+
+
 @router.get("/books/{file_hash}", response_model=BookDetail)
 def get_book(file_hash: str, db: Annotated[Database, Depends(_get_db)]):
     book = db.get_book(file_hash)
@@ -126,7 +155,7 @@ def update_personal_fields(
         raise HTTPException(status_code=404, detail="Book not found")
     db.update_personal_fields(
         file_hash,
-        **{k: v for k, v in body.model_dump().items() if v is not None},
+        **body.model_dump(exclude_unset=True),
     )
     return BookResponse.from_record(db.get_book(file_hash))
 
@@ -147,3 +176,5 @@ def update_book_metadata(
 @router.get("/stats")
 def get_stats(db: Annotated[Database, Depends(_get_db)]):
     return db.get_stats()
+
+

@@ -197,6 +197,49 @@ class Database:
             row = conn.execute("SELECT * FROM books WHERE file_hash=?", (file_hash,)).fetchone()
         return _row_to_book(row) if row else None
 
+    def get_random_book(
+        self,
+        language: str | None = None,
+        systems: list[str] | None = None,
+        categories: list[str] | None = None,
+        genres: list[str] | None = None,
+        folder: str | None = None,
+        read_status: str | None = None,
+        played_status: str | None = None,
+        solo_friendly: bool | None = None,
+        score_min: int | None = None,
+    ) -> BookRecord | None:
+        """Retorna um livro aleatório respeitando os filtros ativos."""
+        wheres, params = [], []
+        if language:
+            wheres.append("b.language = ?"); params.append(language)
+        if folder:
+            wheres.append("b.parent_folder = ?"); params.append(folder)
+        if read_status:
+            wheres.append("b.read_status = ?"); params.append(read_status)
+        if played_status:
+            wheres.append("b.played_status = ?"); params.append(played_status)
+        if solo_friendly is not None:
+            wheres.append("b.solo_friendly = ?"); params.append(1 if solo_friendly else 0)
+        if score_min is not None:
+            wheres.append("b.score >= ?"); params.append(score_min)
+        for s in (systems or []):
+            wheres.append("EXISTS (SELECT 1 FROM json_each(b.system_tags) WHERE json_each.value = ?)")
+            params.append(s)
+        for c in (categories or []):
+            wheres.append("EXISTS (SELECT 1 FROM json_each(b.category_tags) WHERE json_each.value = ?)")
+            params.append(c)
+        for g in (genres or []):
+            wheres.append("EXISTS (SELECT 1 FROM json_each(b.genre_tags) WHERE json_each.value = ?)")
+            params.append(g)
+        where_sql = ("WHERE " + " AND ".join(wheres)) if wheres else ""
+        with self._connect() as conn:
+            row = conn.execute(
+                f"SELECT b.* FROM books b {where_sql} ORDER BY RANDOM() LIMIT 1",
+                params,
+            ).fetchone()
+        return _row_to_book(row) if row else None
+
     def sync_fts(self, book: BookRecord) -> None:
         with self._connect() as conn:
             conn.execute("DELETE FROM books_fts WHERE file_hash=?", (book.file_hash,))
@@ -247,7 +290,7 @@ class Database:
     def update_personal_fields(self, file_hash: str, **kwargs) -> None:
         """Atualiza campos pessoais (read_status, played_status, solo_friendly, review, score)."""
         allowed = {"read_status", "played_status", "solo_friendly", "review", "score"}
-        fields = {k: v for k, v in kwargs.items() if k in allowed and v is not None}
+        fields = {k: v for k, v in kwargs.items() if k in allowed}
         if not fields:
             return
         fields["updated_at"] = datetime.now(timezone.utc).isoformat()

@@ -81,15 +81,16 @@ describe('BookModal — renderização', () => {
     expect(screen.getByText('solo-friendly')).toBeInTheDocument()
   })
 
-  it('renders file path', () => {
+  it('renders file path as breadcrumb (dirs only)', () => {
     render(<BookModal book={book} onClose={() => {}} />)
-    expect(screen.getByText(/mausritter.pdf/)).toBeInTheDocument()
+    // formatPath shows directories as "EN › OSR › Mausritter" (filename stripped)
+    expect(screen.getByText(/EN/)).toBeInTheDocument()
   })
 
   it('calls onClose when close button clicked', () => {
     const onClose = vi.fn()
     render(<BookModal book={book} onClose={onClose} />)
-    fireEvent.click(screen.getByRole('button', { name: /close/i }))
+    fireEvent.click(screen.getByRole('button', { name: /fechar/i }))
     expect(onClose).toHaveBeenCalled()
   })
 
@@ -233,7 +234,7 @@ describe('BookModal — editor de metadados', () => {
     const editBtn = screen.getByRole('button', { name: /editar metadados/i })
     expect(editBtn).toBeInTheDocument()
     // Both buttons must share the same direct parent (modal-top-bar)
-    const closeBtn = screen.getByRole('button', { name: /close/i })
+    const closeBtn = screen.getByRole('button', { name: /fechar/i })
     expect(editBtn.parentElement).toBe(closeBtn.parentElement)
   })
 
@@ -323,28 +324,28 @@ describe('BookModal — navegação prev/next', () => {
   it('ArrowRight key calls onNavigate with next index', () => {
     const onNavigate = vi.fn()
     render(<BookModal book={book} books={[book, book2]} bookIndex={0} onNavigate={onNavigate} onClose={() => {}} />)
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowRight' })
+    fireEvent.keyDown(document, { key: 'ArrowRight' })
     expect(onNavigate).toHaveBeenCalledWith(1)
   })
 
   it('ArrowLeft key calls onNavigate with prev index', () => {
     const onNavigate = vi.fn()
     render(<BookModal book={book2} books={[book, book2]} bookIndex={1} onNavigate={onNavigate} onClose={() => {}} />)
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowLeft' })
+    fireEvent.keyDown(document, { key: 'ArrowLeft' })
     expect(onNavigate).toHaveBeenCalledWith(0)
   })
 
   it('ArrowRight on last book calls onNavigate with null (cross-page)', () => {
     const onNavigate = vi.fn()
     render(<BookModal book={book2} books={[book, book2]} bookIndex={1} onNavigate={onNavigate} hasNextPage onClose={() => {}} />)
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowRight' })
+    fireEvent.keyDown(document, { key: 'ArrowRight' })
     expect(onNavigate).toHaveBeenCalledWith('next-page')
   })
 
   it('ArrowLeft on first book calls onNavigate with prev-page (cross-page)', () => {
     const onNavigate = vi.fn()
     render(<BookModal book={book} books={[book, book2]} bookIndex={0} onNavigate={onNavigate} hasPrevPage onClose={() => {}} />)
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowLeft' })
+    fireEvent.keyDown(document, { key: 'ArrowLeft' })
     expect(onNavigate).toHaveBeenCalledWith('prev-page')
   })
 

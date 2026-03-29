@@ -12,10 +12,12 @@ vi.mock('../src/hooks/useFacets.js', () => ({
 vi.mock('../src/hooks/useIndexer.js', () => ({
   useIndexer: vi.fn(),
 }))
-// Mock api client used by BookModal
+// Mock api client used by BookModal and App
 vi.mock('../src/api/client.js', () => ({
   patchPersonalFields: vi.fn(),
   patchBookMetadata: vi.fn(),
+  fetchRandomBook: vi.fn().mockResolvedValue({}),
+  fetchVersion: vi.fn().mockResolvedValue({ version: '0.2.0' }),
 }))
 
 import { useBooks } from '../src/hooks/useBooks.js'
@@ -120,11 +122,12 @@ describe('App — stale modal data fix', () => {
     })
 
     // Close modal
-    fireEvent.click(screen.getByRole('button', { name: /close/i }))
+    fireEvent.click(screen.getByRole('button', { name: /fechar/i }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
+    // After save, displayItems reflects updatedBook so card title changed too
     // Click same book card again — should open with updated title
-    fireEvent.click(screen.getByText('Mausritter'))
+    fireEvent.click(screen.getByText('Mausritter (Updated)'))
     const dialog = screen.getByRole('dialog')
     expect(dialog).toBeInTheDocument()
     expect(within(dialog).getByText('Mausritter (Updated)')).toBeInTheDocument()

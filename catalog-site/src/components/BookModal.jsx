@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { patchPersonalFields, patchBookMetadata } from '../api/client.js'
 
 const LANG_LABEL = { en: 'English', pt: 'Português' }
@@ -14,7 +14,17 @@ function stripMarkdown(text) {
     .trim()
 }
 
-export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, hasPrevPage, onClose, onUpdate }) {
+function formatPath(relative_path, parent_folder, language) {
+  if (!relative_path) return null
+  // Break path into breadcrumb-like parts
+  const parts = relative_path.split(/[/\\]/).filter(Boolean)
+  // Remove filename (last part) from display since it's the book title
+  const dirs = parts.slice(0, -1)
+  if (dirs.length === 0) return relative_path
+  return dirs.join(' › ')
+}
+
+export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, hasPrevPage, onClose, onUpdate, onRandom }) {
   const [personal, setPersonal] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
@@ -22,6 +32,7 @@ export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, has
   const [meta, setMeta] = useState(null)
   const [metaSaving, setMetaSaving] = useState(false)
   const [metaError, setMetaError] = useState(null)
+  const boxRef = useRef(null)
 
   // Reset all state when book changes
   useEffect(() => {
@@ -48,10 +59,19 @@ export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, has
     else onNavigate('next-page')
   }
 
-  function handleKeyDown(e) {
-    if (e.key === 'ArrowRight' && canGoNext) handleNext()
-    if (e.key === 'ArrowLeft' && canGoPrev) handlePrev()
-  }
+  // Global keyboard handler — works regardless of what's focused inside
+  useEffect(() => {
+    if (!book) return
+    function onKey(e) {
+      // Don't intercept when typing in an input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      if (e.key === 'ArrowRight') handleNext()
+      if (e.key === 'ArrowLeft') handlePrev()
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [book, canGoNext, canGoPrev, bookIndex, books]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!book) return null
 
@@ -147,28 +167,37 @@ export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, has
     }
   }
 
+  const pathDisplay = formatPath(relative_path, parent_folder, language)
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       className="modal-overlay"
       onClick={onClose}
-      onKeyDown={handleKeyDown}
     >
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
+      <div className="modal-box" ref={boxRef} onClick={e => e.stopPropagation()}>
+        {/* Fixed top bar: nav + actions */}
         <div className="modal-top-bar">
-          <button onClick={onClose} aria-label="Close" className="modal-close">×</button>
-          {!editingMeta && (
-            <button className="modal-edit-btn" onClick={openMetaEditor} aria-label="Editar metadados">✎</button>
+          {hasBooks && (
+            <button className="modal-nav-arrow" onClick={handlePrev} disabled={!canGoPrev} aria-label="Livro anterior">‹</button>
           )}
+          <span className="modal-nav-pos">
+            {hasBooks ? `${bookIndex + 1} / ${books.length}` : ''}
+          </span>
+          {hasBooks && (
+            <button className="modal-nav-arrow" onClick={handleNext} disabled={!canGoNext} aria-label="Próximo livro">›</button>
+          )}
+          <div style={{ flex: 1 }} />
+          {onRandom && (
+            <button className="modal-action-btn" onClick={onRandom} aria-label="Livro aleatório" title="Livro aleatório">🎲</button>
+          )}
+          {!editingMeta && (
+            <button className="modal-action-btn" onClick={openMetaEditor} aria-label="Editar metadados" title="Editar metadados">✎</button>
+          )}
+          <button onClick={onClose} aria-label="Fechar" className="modal-action-btn modal-close">×</button>
         </div>
-        {hasBooks && (
-          <div className="modal-nav">
-            <button className="modal-nav-btn" onClick={handlePrev} disabled={!canGoPrev} aria-label="Livro anterior">‹ Anterior</button>
-            <span className="modal-nav-pos">{bookIndex + 1} / {books.length}</span>
-            <button className="modal-nav-btn" onClick={handleNext} disabled={!canGoNext} aria-label="Próximo livro">Próximo ›</button>
-          </div>
-        )}
+
         <div className="modal-inner">
           <div className="modal-header">
             {thumbnail_url && (
@@ -178,11 +207,10 @@ export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, has
               <h2 className="modal-title">{title}</h2>
               <div className="modal-badges">
                 {language && <span className="badge-lang">{LANG_LABEL[language] ?? language.toUpperCase()}</span>}
-                {parent_folder && <span className="badge-folder">{parent_folder}</span>}
-                {system_tags?.map(t => <Tag key={t} label={t} color="#4a6741" />)}
-                {category_tags?.map(t => <Tag key={t} label={t} color="#6b7c3e" />)}
-                {genre_tags?.map(t => <Tag key={t} label={t} color="#c5913e" />)}
-                {custom_tags?.map(t => <Tag key={t} label={t} color="#999" />)}
+                {system_tags?.map(t => <span key={t} className="tag-pill tag-system">{t}</span>)}
+                {category_tags?.map(t => <span key={t} className="tag-pill tag-category">{t}</span>)}
+                {genre_tags?.map(t => <span key={t} className="tag-pill tag-genre">{t}</span>)}
+                {custom_tags?.map(t => <span key={t} className="tag-pill tag-custom">{t}</span>)}
               </div>
             </div>
           </div>
@@ -235,11 +263,16 @@ export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, has
           )}
 
           <div className="modal-meta">
-            {relative_path && <div><strong>Path:</strong> {relative_path}</div>}
-            {page_count && <div><strong>Pages:</strong> {page_count}</div>}
-            {file_size_human && <div><strong>Size:</strong> {file_size_human}</div>}
+            {pathDisplay && (
+              <div className="modal-path">
+                <span className="modal-path-label">Pasta</span>
+                <span className="modal-path-value">{pathDisplay}</span>
+              </div>
+            )}
+            {page_count && <div><strong>Páginas:</strong> {page_count}</div>}
+            {file_size_human && <div><strong>Tamanho:</strong> {file_size_human}</div>}
             {llm_confidence && (
-              <div><strong>AI confidence:</strong> {(llm_confidence * 100).toFixed(0)}%{llm_provider ? ` via ${llm_provider}` : ''}</div>
+              <div><strong>IA:</strong> {(llm_confidence * 100).toFixed(0)}% confiança{llm_provider ? ` · ${llm_provider}` : ''}</div>
             )}
           </div>
 

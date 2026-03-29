@@ -42,7 +42,7 @@ function defaultProps(overrides = {}) {
 describe('FilterSidebar — filtros de catálogo', () => {
   it('renders system facets with counts after expanding group', () => {
     render(<FilterSidebar {...defaultProps()} />)
-    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    fireEvent.click(screen.getByRole('button', { name: /sistema/i }))
     expect(screen.getByText('OSR')).toBeInTheDocument()
     expect(screen.getByText('10')).toBeInTheDocument()
     expect(screen.getByText('PbtA')).toBeInTheDocument()
@@ -51,7 +51,7 @@ describe('FilterSidebar — filtros de catálogo', () => {
   it('calls onToggleSystem when system filter clicked (after expand)', () => {
     const onToggleSystem = vi.fn()
     render(<FilterSidebar {...defaultProps({ onToggleSystem })} />)
-    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    fireEvent.click(screen.getByRole('button', { name: /sistema/i }))
     fireEvent.click(screen.getByText('OSR'))
     expect(onToggleSystem).toHaveBeenCalledWith('OSR')
   })
@@ -59,7 +59,7 @@ describe('FilterSidebar — filtros de catálogo', () => {
   it('clicking system checkbox directly calls onToggleSystem exactly once', () => {
     const onToggleSystem = vi.fn()
     render(<FilterSidebar {...defaultProps({ onToggleSystem })} />)
-    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    fireEvent.click(screen.getByRole('button', { name: /sistema/i }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'OSR' }))
     expect(onToggleSystem).toHaveBeenCalledTimes(1)
     expect(onToggleSystem).toHaveBeenCalledWith('OSR')
@@ -68,7 +68,7 @@ describe('FilterSidebar — filtros de catálogo', () => {
   it('calls onToggleCategory when category clicked (after expand)', () => {
     const onToggleCategory = vi.fn()
     render(<FilterSidebar {...defaultProps({ onToggleCategory })} />)
-    fireEvent.click(screen.getByRole('button', { name: /category/i }))
+    fireEvent.click(screen.getByRole('button', { name: /categoria/i }))
     fireEvent.click(screen.getByText('Core Rulebook'))
     expect(onToggleCategory).toHaveBeenCalledWith('Core Rulebook')
   })
@@ -76,7 +76,7 @@ describe('FilterSidebar — filtros de catálogo', () => {
   it('calls onToggleGenre when genre clicked (after expand)', () => {
     const onToggleGenre = vi.fn()
     render(<FilterSidebar {...defaultProps({ onToggleGenre })} />)
-    fireEvent.click(screen.getByRole('button', { name: /genre/i }))
+    fireEvent.click(screen.getByRole('button', { name: /gênero/i }))
     fireEvent.click(screen.getByText('Fantasy'))
     expect(onToggleGenre).toHaveBeenCalledWith('Fantasy')
   })
@@ -89,6 +89,7 @@ describe('FilterSidebar — filtros de catálogo', () => {
   it('calls onSetLanguage when language radio clicked', () => {
     const onSetLanguage = vi.fn()
     render(<FilterSidebar {...defaultProps({ onSetLanguage })} />)
+    fireEvent.click(screen.getByRole('button', { name: /idioma/i }))
     fireEvent.click(screen.getByRole('radio', { name: /english/i }))
     expect(onSetLanguage).toHaveBeenCalledWith('en')
   })
@@ -96,22 +97,23 @@ describe('FilterSidebar — filtros de catálogo', () => {
   it('calls onSetFolder when folder radio clicked', () => {
     const onSetFolder = vi.fn()
     render(<FilterSidebar {...defaultProps({ onSetFolder })} />)
+    fireEvent.click(screen.getByRole('button', { name: /pasta/i }))
     fireEvent.click(screen.getByRole('radio', { name: 'RPG/EN' }))
     expect(onSetFolder).toHaveBeenCalledWith('RPG/EN')
   })
 
   it('shows reset button only when filters are active', () => {
     const { rerender } = render(<FilterSidebar {...defaultProps()} />)
-    expect(screen.queryByRole('button', { name: /reset/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /limpar/i })).not.toBeInTheDocument()
 
     rerender(<FilterSidebar {...defaultProps({ filters: { ...filters, systems: ['OSR'] } })} />)
-    expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /limpar/i })).toBeInTheDocument()
   })
 
   it('calls onReset when reset button clicked', () => {
     const onReset = vi.fn()
     render(<FilterSidebar {...defaultProps({ onReset, filters: { ...filters, systems: ['OSR'] } })} />)
-    fireEvent.click(screen.getByRole('button', { name: /reset/i }))
+    fireEvent.click(screen.getByRole('button', { name: /limpar/i }))
     expect(onReset).toHaveBeenCalled()
   })
 })
@@ -167,15 +169,15 @@ describe('FilterSidebar — grupos colapsáveis', () => {
 
   it('clicking group heading expands the group', () => {
     render(<FilterSidebar {...defaultProps()} />)
-    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    fireEvent.click(screen.getByRole('button', { name: /sistema/i }))
     expect(screen.getByRole('checkbox', { name: 'OSR' })).toBeInTheDocument()
   })
 
   it('clicking group heading again collapses it', () => {
     render(<FilterSidebar {...defaultProps()} />)
-    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    fireEvent.click(screen.getByRole('button', { name: /sistema/i }))
     expect(screen.getByRole('checkbox', { name: 'OSR' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    fireEvent.click(screen.getByRole('button', { name: /sistema/i }))
     expect(screen.queryByRole('checkbox', { name: 'OSR' })).not.toBeInTheDocument()
   })
 
@@ -187,8 +189,9 @@ describe('FilterSidebar — grupos colapsáveis', () => {
 })
 
 describe('FilterSidebar — filtros pessoais', () => {
-  it('renders read status options', () => {
+  it('renders read status options when section expanded', () => {
     render(<FilterSidebar {...defaultProps()} />)
+    fireEvent.click(screen.getByRole('button', { name: /leitura/i }))
     expect(screen.getByRole('radio', { name: 'Não lido' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Lendo' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Lido' })).toBeInTheDocument()
@@ -197,17 +200,19 @@ describe('FilterSidebar — filtros pessoais', () => {
   it('calls onSetReadStatus when read status radio clicked', () => {
     const onSetReadStatus = vi.fn()
     render(<FilterSidebar {...defaultProps({ onSetReadStatus })} />)
+    fireEvent.click(screen.getByRole('button', { name: /leitura/i }))
     fireEvent.click(screen.getByRole('radio', { name: 'Lido' }))
     expect(onSetReadStatus).toHaveBeenCalledWith('read')
   })
 
-  it('marks active read_status as checked', () => {
+  it('marks active read_status as checked (section auto-expanded)', () => {
     render(<FilterSidebar {...defaultProps({ filters: { ...filters, read_status: 'read' } })} />)
     expect(screen.getByRole('radio', { name: 'Lido' })).toBeChecked()
   })
 
-  it('renders played status options', () => {
+  it('renders played status options when section expanded', () => {
     render(<FilterSidebar {...defaultProps()} />)
+    fireEvent.click(screen.getByRole('button', { name: /jogado/i }))
     expect(screen.getByRole('radio', { name: 'Não jogado' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Jogando' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Jogado' })).toBeInTheDocument()
@@ -216,6 +221,7 @@ describe('FilterSidebar — filtros pessoais', () => {
   it('calls onSetPlayedStatus when played status radio clicked', () => {
     const onSetPlayedStatus = vi.fn()
     render(<FilterSidebar {...defaultProps({ onSetPlayedStatus })} />)
+    fireEvent.click(screen.getByRole('button', { name: /jogado/i }))
     fireEvent.click(screen.getByRole('radio', { name: 'Jogado' }))
     expect(onSetPlayedStatus).toHaveBeenCalledWith('played')
   })
@@ -223,6 +229,7 @@ describe('FilterSidebar — filtros pessoais', () => {
   it('calls onSetSoloFriendly when solo friendly checkbox clicked', () => {
     const onSetSoloFriendly = vi.fn()
     render(<FilterSidebar {...defaultProps({ onSetSoloFriendly })} />)
+    fireEvent.click(screen.getByRole('button', { name: /solo/i }))
     fireEvent.click(screen.getByRole('checkbox', { name: /solo friendly/i }))
     expect(onSetSoloFriendly).toHaveBeenCalled()
   })
@@ -230,12 +237,13 @@ describe('FilterSidebar — filtros pessoais', () => {
   it('calls onSetScoreMin when star button clicked', () => {
     const onSetScoreMin = vi.fn()
     render(<FilterSidebar {...defaultProps({ onSetScoreMin })} />)
+    fireEvent.click(screen.getByRole('button', { name: /score/i }))
     fireEvent.click(screen.getByRole('button', { name: /3 estrelas/i }))
     expect(onSetScoreMin).toHaveBeenCalledWith(3)
   })
 
   it('shows reset button when personal filter active', () => {
     render(<FilterSidebar {...defaultProps({ filters: { ...filters, read_status: 'read' } })} />)
-    expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /limpar/i })).toBeInTheDocument()
   })
 })

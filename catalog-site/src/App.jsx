@@ -10,6 +10,9 @@ import { FilterSidebar } from './components/FilterSidebar.jsx'
 import { SearchBar } from './components/SearchBar.jsx'
 import { Pagination } from './components/Pagination.jsx'
 import { IndexingPanel } from './components/IndexingPanel.jsx'
+import { fetchRandomBook, fetchVersion } from './api/client.js'
+
+const FRONTEND_VERSION = '0.2.0'
 
 const SORT_OPTIONS = [
   { value: 'title_asc', label: 'Title A–Z' },
@@ -28,6 +31,8 @@ export default function App() {
   const [selectedBookIndex, setSelectedBookIndex] = useState(null)
   const [bookUpdates, setBookUpdates] = useState({})
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [pendingNav, setPendingNav] = useState(null) // 'first' | 'last'
+  const [backendVersion, setBackendVersion] = useState(null)
 
   const { filters, toggleSystem, toggleCategory, toggleGenre, toggleExcludeSystem, toggleExcludeCategory, toggleExcludeGenre, setLanguage, setFolder, setSort, setReadStatus, setPlayedStatus, setSoloFriendly, setScoreMin, reset, toParams } = useFilters()
   const { inputValue, q, setInput, clear } = useSearch()
@@ -35,6 +40,7 @@ export default function App() {
 
   const queryParams = { ...toParams(), q, page }
   const { items, pagination, loading } = useBooks(queryParams)
+  const displayItems = items.map(b => bookUpdates[b.file_hash] ?? b)
   const { facets } = useFacets({
     language: filters.language,
     systems: filters.systems,
@@ -47,9 +53,42 @@ export default function App() {
     try { localStorage.setItem('rpg_page', String(page)) } catch {}
   }, [page])
 
+  useEffect(() => {
+    fetchVersion().then(d => setBackendVersion(d.version)).catch(() => {})
+  }, [])
+
+  // Após trocar de página por nav cross-page, abre primeiro/último livro
+  useEffect(() => {
+    if (!pendingNav || items.length === 0) return
+    const idx = pendingNav === 'first' ? 0 : items.length - 1
+    const b = items[idx]
+    setSelectedBook(bookUpdates[b.file_hash] ?? b)
+    setSelectedBookIndex(idx)
+    setPendingNav(null)
+  }, [items, pendingNav]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function handleSearch(val) { setInput(val); setPage(1) }
   function handleFilterChange(fn) {
     return (...args) => { fn(...args); setPage(1) }
+  }
+
+  async function handleRandomBook() {
+    try {
+      const params = toParams()
+      const book = await fetchRandomBook({
+        language: params.language,
+        systems: params.systems,
+        categories: params.categories,
+        genres: params.genres,
+        folder: params.folder,
+        read_status: params.read_status,
+        played_status: params.played_status,
+        solo_friendly: params.solo_friendly,
+        score_min: params.score_min,
+      })
+      setSelectedBook(bookUpdates[book.file_hash] ?? book)
+      setSelectedBookIndex(null)
+    } catch {}
   }
 
   const sidebarProps = {
@@ -68,6 +107,7 @@ export default function App() {
     onSetSoloFriendly: handleFilterChange(setSoloFriendly),
     onSetScoreMin: handleFilterChange(setScoreMin),
     onReset: () => { reset(); setPage(1) },
+    onRandomBook: handleRandomBook,
   }
 
   return (
@@ -129,7 +169,7 @@ export default function App() {
             <Pagination page={page} totalPages={pagination.total_pages} onPage={setPage} />
           )}
 
-          <BookGrid books={items} loading={loading} onSelect={(b, idx) => {
+          <BookGrid books={displayItems} loading={loading} onSelect={(b, idx) => {
             setSelectedBook(bookUpdates[b.file_hash] ?? b)
             setSelectedBookIndex(idx)
           }} />
@@ -142,21 +182,19 @@ export default function App() {
 
       <BookModal
         book={selectedBook}
-        books={items}
+        books={displayItems}
         bookIndex={selectedBookIndex}
         hasNextPage={pagination ? page < pagination.total_pages : false}
         hasPrevPage={page > 1}
         onNavigate={(target) => {
           if (target === 'next-page') {
             setPage(p => p + 1)
-            setSelectedBook(null)
-            setSelectedBookIndex(null)
+            setPendingNav('first')
           } else if (target === 'prev-page') {
             setPage(p => p - 1)
-            setSelectedBook(null)
-            setSelectedBookIndex(null)
+            setPendingNav('last')
           } else {
-            const b = items[target]
+            const b = displayItems[target]
             setSelectedBook(bookUpdates[b.file_hash] ?? b)
             setSelectedBookIndex(target)
           }
@@ -166,7 +204,16 @@ export default function App() {
           setSelectedBook(updated)
           setBookUpdates(prev => ({ ...prev, [updated.file_hash]: updated }))
         }}
+        onRandom={handleRandomBook}
       />
+
+      <footer className="site-footer">
+        <span>RPG Catalog</span>
+        <span className="footer-version">
+          Frontend v{FRONTEND_VERSION}
+          {backendVersion && <> · Backend v{backendVersion}</>}
+        </span>
+      </footer>
     </>
   )
 }

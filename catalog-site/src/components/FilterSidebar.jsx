@@ -1,9 +1,15 @@
+import { useState } from 'react'
+
+const READ_LABELS = { unread: 'Não lido', reading: 'Lendo', read: 'Lido' }
+const PLAYED_LABELS = { unplayed: 'Não jogado', playing: 'Jogando', played: 'Jogado' }
+
 export function FilterSidebar({
   facets, filters,
   onToggleSystem, onToggleCategory, onToggleGenre,
   onToggleSystemExclude, onToggleCategoryExclude, onToggleGenreExclude,
   onSetLanguage, onSetFolder, onReset,
   onSetReadStatus, onSetPlayedStatus, onSetSoloFriendly, onSetScoreMin,
+  onRandomBook,
 }) {
   const hasActiveFilters = (
     filters.systems.length > 0 || filters.categories.length > 0 ||
@@ -15,90 +21,109 @@ export function FilterSidebar({
   return (
     <aside>
       <div className="sidebar-header">
-        <span className="sidebar-title">Filters</span>
-        {hasActiveFilters && (
-          <button onClick={onReset} aria-label="Reset filters" className="sidebar-reset">Reset</button>
-        )}
+        <span className="sidebar-title">Filtros</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {onRandomBook && (
+            <button onClick={onRandomBook} className="sidebar-random-btn" title="Livro aleatório">🎲</button>
+          )}
+          {hasActiveFilters && (
+            <button onClick={onReset} aria-label="Limpar filtros" className="sidebar-reset">✕ Limpar</button>
+          )}
+        </div>
       </div>
 
       {/* Language */}
       {facets.languages?.length > 0 && (
-        <div className="sidebar-section">
-          <h4 className="sidebar-heading">Language</h4>
+        <CollapsibleSection title="Idioma" defaultOpen={!!filters.language}>
           {facets.languages.map(({ value, label, count }) => (
-            <label key={value} className={`facet-item${filters.language === value ? ' facet-active' : ''}`}>
+            <label
+              key={value}
+              className={`facet-item${filters.language === value ? ' facet-active' : ''}`}
+              onClick={() => onSetLanguage(filters.language === value ? null : value)}
+            >
               <input
                 type="radio"
                 name="language"
                 checked={filters.language === value}
-                onChange={() => onSetLanguage(value)}
+                onChange={() => {}}
                 aria-label={label}
               />
               <span className="facet-name">{label}</span>
               <span className="facet-count">{count}</span>
             </label>
           ))}
-        </div>
+        </CollapsibleSection>
       )}
 
-      <FacetGroup title="System" items={facets.systems} active={filters.systems} excluded={filters.systems_not} onToggle={onToggleSystem} onExclude={onToggleSystemExclude} />
-      <FacetGroup title="Category" items={facets.categories} active={filters.categories} excluded={filters.categories_not} onToggle={onToggleCategory} onExclude={onToggleCategoryExclude} />
-      <FacetGroup title="Genre" items={facets.genres} active={filters.genres} excluded={filters.genres_not} onToggle={onToggleGenre} onExclude={onToggleGenreExclude} />
+      <FacetGroup title="Sistema" items={facets.systems} active={filters.systems} excluded={filters.systems_not} onToggle={onToggleSystem} onExclude={onToggleSystemExclude} />
+      <FacetGroup title="Categoria" items={facets.categories} active={filters.categories} excluded={filters.categories_not} onToggle={onToggleCategory} onExclude={onToggleCategoryExclude} />
+      <FacetGroup title="Gênero" items={facets.genres} active={filters.genres} excluded={filters.genres_not} onToggle={onToggleGenre} onExclude={onToggleGenreExclude} />
 
       {/* Folder */}
       {facets.folders?.length > 0 && (
-        <div className="sidebar-section">
-          <h4 className="sidebar-heading">Folder</h4>
+        <CollapsibleSection title="Pasta" defaultOpen={!!filters.folder}>
           {facets.folders.slice(0, 20).map(({ value, count }) => (
-            <label key={value} className={`facet-item${filters.folder === value ? ' facet-active' : ''}`}>
+            <label
+              key={value}
+              className={`facet-item${filters.folder === value ? ' facet-active' : ''}`}
+              onClick={() => onSetFolder(filters.folder === value ? null : value)}
+            >
               <input
                 type="radio"
                 name="folder"
                 checked={filters.folder === value}
-                onChange={() => onSetFolder(value)}
+                onChange={() => {}}
                 aria-label={value}
               />
               <span className="facet-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
               <span className="facet-count" style={{ flexShrink: 0 }}>{count}</span>
             </label>
           ))}
-        </div>
+        </CollapsibleSection>
       )}
 
-      {/* Personal filters */}
-      <div className="sidebar-section">
-        <h4 className="sidebar-heading">Leitura</h4>
+      {/* Leitura */}
+      <CollapsibleSection title="Leitura" defaultOpen={!!filters.read_status}>
         {['unread', 'reading', 'read'].map(s => (
-          <label key={s} className={`facet-item${filters.read_status === s ? ' facet-active' : ''}`}>
+          <label
+            key={s}
+            className={`facet-item${filters.read_status === s ? ' facet-active' : ''}`}
+            onClick={() => onSetReadStatus(filters.read_status === s ? null : s)}
+          >
             <input
               type="radio"
               name="read_status"
               checked={filters.read_status === s}
-              onChange={() => onSetReadStatus(s)}
+              onChange={() => {}}
               aria-label={READ_LABELS[s]}
             />
             <span className="facet-name">{READ_LABELS[s]}</span>
           </label>
         ))}
-      </div>
+      </CollapsibleSection>
 
-      <div className="sidebar-section">
-        <h4 className="sidebar-heading">Jogado</h4>
+      {/* Jogado */}
+      <CollapsibleSection title="Jogado" defaultOpen={!!filters.played_status}>
         {['unplayed', 'playing', 'played'].map(s => (
-          <label key={s} className={`facet-item${filters.played_status === s ? ' facet-active' : ''}`}>
+          <label
+            key={s}
+            className={`facet-item${filters.played_status === s ? ' facet-active' : ''}`}
+            onClick={() => onSetPlayedStatus(filters.played_status === s ? null : s)}
+          >
             <input
               type="radio"
               name="played_status"
               checked={filters.played_status === s}
-              onChange={() => onSetPlayedStatus(s)}
+              onChange={() => {}}
               aria-label={PLAYED_LABELS[s]}
             />
             <span className="facet-name">{PLAYED_LABELS[s]}</span>
           </label>
         ))}
-      </div>
+      </CollapsibleSection>
 
-      <div className="sidebar-section">
+      {/* Solo friendly */}
+      <CollapsibleSection title="Solo" defaultOpen={!!filters.solo_friendly}>
         <label className={`facet-item${filters.solo_friendly ? ' facet-active' : ''}`}>
           <input
             type="checkbox"
@@ -108,10 +133,10 @@ export function FilterSidebar({
           />
           <span className="facet-name">Solo friendly</span>
         </label>
-      </div>
+      </CollapsibleSection>
 
-      <div className="sidebar-section">
-        <h4 className="sidebar-heading">Score mínimo</h4>
+      {/* Score mínimo */}
+      <CollapsibleSection title="Score mínimo" defaultOpen={filters.score_min != null}>
         <div className="score-filter">
           {[1, 2, 3, 4, 5].map(n => (
             <button
@@ -122,15 +147,28 @@ export function FilterSidebar({
             >★</button>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
     </aside>
   )
 }
 
-import { useState } from 'react'
-
-const READ_LABELS = { unread: 'Não lido', reading: 'Lendo', read: 'Lido' }
-const PLAYED_LABELS = { unplayed: 'Não jogado', playing: 'Jogando', played: 'Jogado' }
+function CollapsibleSection({ title, defaultOpen = false, children }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="sidebar-section">
+      <button
+        className="sidebar-heading sidebar-heading-btn"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-label={title}
+      >
+        {title}
+        <span className="sidebar-heading-caret">{open ? '▴' : '▾'}</span>
+      </button>
+      {open && children}
+    </div>
+  )
+}
 
 function FacetGroup({ title, items, active, excluded = [], onToggle, onExclude }) {
   const hasActive = active.some(a => items?.some(i => i.value === a))
