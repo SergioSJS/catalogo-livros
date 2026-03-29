@@ -36,35 +36,48 @@ function defaultProps(overrides = {}) {
 }
 
 describe('FilterSidebar — filtros de catálogo', () => {
-  it('renders system facets with counts', () => {
+  it('renders system facets with counts after expanding group', () => {
     render(<FilterSidebar {...defaultProps()} />)
+    fireEvent.click(screen.getByRole('button', { name: /system/i }))
     expect(screen.getByText('OSR')).toBeInTheDocument()
     expect(screen.getByText('10')).toBeInTheDocument()
     expect(screen.getByText('PbtA')).toBeInTheDocument()
   })
 
-  it('calls onToggleSystem when system filter clicked', () => {
+  it('calls onToggleSystem when system filter clicked (after expand)', () => {
     const onToggleSystem = vi.fn()
     render(<FilterSidebar {...defaultProps({ onToggleSystem })} />)
+    fireEvent.click(screen.getByRole('button', { name: /system/i }))
     fireEvent.click(screen.getByText('OSR'))
     expect(onToggleSystem).toHaveBeenCalledWith('OSR')
   })
 
-  it('calls onToggleCategory when category clicked', () => {
+  it('clicking system checkbox directly calls onToggleSystem exactly once', () => {
+    const onToggleSystem = vi.fn()
+    render(<FilterSidebar {...defaultProps({ onToggleSystem })} />)
+    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'OSR' }))
+    expect(onToggleSystem).toHaveBeenCalledTimes(1)
+    expect(onToggleSystem).toHaveBeenCalledWith('OSR')
+  })
+
+  it('calls onToggleCategory when category clicked (after expand)', () => {
     const onToggleCategory = vi.fn()
     render(<FilterSidebar {...defaultProps({ onToggleCategory })} />)
+    fireEvent.click(screen.getByRole('button', { name: /category/i }))
     fireEvent.click(screen.getByText('Core Rulebook'))
     expect(onToggleCategory).toHaveBeenCalledWith('Core Rulebook')
   })
 
-  it('calls onToggleGenre when genre clicked', () => {
+  it('calls onToggleGenre when genre clicked (after expand)', () => {
     const onToggleGenre = vi.fn()
     render(<FilterSidebar {...defaultProps({ onToggleGenre })} />)
+    fireEvent.click(screen.getByRole('button', { name: /genre/i }))
     fireEvent.click(screen.getByText('Fantasy'))
     expect(onToggleGenre).toHaveBeenCalledWith('Fantasy')
   })
 
-  it('shows active system as checked', () => {
+  it('shows active system as checked (group auto-expanded)', () => {
     render(<FilterSidebar {...defaultProps({ filters: { ...filters, systems: ['OSR'] } })} />)
     expect(screen.getByRole('checkbox', { name: /OSR/i })).toBeChecked()
   })
@@ -96,6 +109,34 @@ describe('FilterSidebar — filtros de catálogo', () => {
     render(<FilterSidebar {...defaultProps({ onReset, filters: { ...filters, systems: ['OSR'] } })} />)
     fireEvent.click(screen.getByRole('button', { name: /reset/i }))
     expect(onReset).toHaveBeenCalled()
+  })
+})
+
+describe('FilterSidebar — grupos colapsáveis', () => {
+  it('filter groups are collapsed by default', () => {
+    render(<FilterSidebar {...defaultProps()} />)
+    // OSR is in a collapsed group and not visible
+    expect(screen.queryByRole('checkbox', { name: 'OSR' })).not.toBeInTheDocument()
+  })
+
+  it('clicking group heading expands the group', () => {
+    render(<FilterSidebar {...defaultProps()} />)
+    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    expect(screen.getByRole('checkbox', { name: 'OSR' })).toBeInTheDocument()
+  })
+
+  it('clicking group heading again collapses it', () => {
+    render(<FilterSidebar {...defaultProps()} />)
+    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    expect(screen.getByRole('checkbox', { name: 'OSR' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /system/i }))
+    expect(screen.queryByRole('checkbox', { name: 'OSR' })).not.toBeInTheDocument()
+  })
+
+  it('active filter group is expanded by default', () => {
+    render(<FilterSidebar {...defaultProps({ filters: { ...filters, systems: ['OSR'] } })} />)
+    // Has active system filter, group should be expanded
+    expect(screen.getByRole('checkbox', { name: 'OSR' })).toBeInTheDocument()
   })
 })
 

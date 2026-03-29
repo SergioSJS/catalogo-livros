@@ -45,4 +45,18 @@ describe('BookCard', () => {
     render(<BookCard book={book} onSelect={() => {}} />)
     expect(screen.getByRole('img')).toBeInTheDocument()
   })
+
+  it('renders score overlay with filled stars when score is set', () => {
+    render(<BookCard book={{ ...book, score: 3 }} onSelect={() => {}} />)
+    const overlay = screen.getByTestId('score-overlay')
+    expect(overlay).toBeInTheDocument()
+    expect(overlay).toHaveTextContent('★★★')
+  })
+
+  it('renders score overlay as empty when score is null', () => {
+    render(<BookCard book={{ ...book, score: null }} onSelect={() => {}} />)
+    const overlay = screen.getByTestId('score-overlay')
+    expect(overlay).toBeInTheDocument()
+    expect(overlay).toHaveTextContent('Sem nota')
+  })
 })

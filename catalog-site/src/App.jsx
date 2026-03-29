@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useFilters } from './hooks/useFilters.js'
 import { useSearch } from './hooks/useSearch.js'
 import { useBooks } from './hooks/useBooks.js'
@@ -21,8 +21,12 @@ const SORT_OPTIONS = [
 ]
 
 export default function App() {
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(() => {
+    try { return parseInt(localStorage.getItem('rpg_page') ?? '1', 10) || 1 } catch { return 1 }
+  })
   const [selectedBook, setSelectedBook] = useState(null)
+  const [selectedBookIndex, setSelectedBookIndex] = useState(null)
+  const [bookUpdates, setBookUpdates] = useState({})
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const { filters, toggleSystem, toggleCategory, toggleGenre, setLanguage, setFolder, setSort, setReadStatus, setPlayedStatus, setSoloFriendly, setScoreMin, reset, toParams } = useFilters()
@@ -38,6 +42,10 @@ export default function App() {
     genres: filters.genres,
     folder: filters.folder,
   })
+
+  useEffect(() => {
+    try { localStorage.setItem('rpg_page', String(page)) } catch {}
+  }, [page])
 
   function handleSearch(val) { setInput(val); setPage(1) }
   function handleFilterChange(fn) {
@@ -114,7 +122,14 @@ export default function App() {
             </div>
           </div>
 
-          <BookGrid books={items} loading={loading} onSelect={setSelectedBook} />
+          {pagination && pagination.total_pages > 1 && (
+            <Pagination page={page} totalPages={pagination.total_pages} onPage={setPage} />
+          )}
+
+          <BookGrid books={items} loading={loading} onSelect={(b, idx) => {
+            setSelectedBook(bookUpdates[b.file_hash] ?? b)
+            setSelectedBookIndex(idx)
+          }} />
 
           {pagination && pagination.total_pages > 1 && (
             <Pagination page={page} totalPages={pagination.total_pages} onPage={setPage} />
@@ -124,8 +139,30 @@ export default function App() {
 
       <BookModal
         book={selectedBook}
-        onClose={() => setSelectedBook(null)}
-        onUpdate={(updated) => setSelectedBook(updated)}
+        books={items}
+        bookIndex={selectedBookIndex}
+        hasNextPage={pagination ? page < pagination.total_pages : false}
+        hasPrevPage={page > 1}
+        onNavigate={(target) => {
+          if (target === 'next-page') {
+            setPage(p => p + 1)
+            setSelectedBook(null)
+            setSelectedBookIndex(null)
+          } else if (target === 'prev-page') {
+            setPage(p => p - 1)
+            setSelectedBook(null)
+            setSelectedBookIndex(null)
+          } else {
+            const b = items[target]
+            setSelectedBook(bookUpdates[b.file_hash] ?? b)
+            setSelectedBookIndex(target)
+          }
+        }}
+        onClose={() => { setSelectedBook(null); setSelectedBookIndex(null) }}
+        onUpdate={(updated) => {
+          setSelectedBook(updated)
+          setBookUpdates(prev => ({ ...prev, [updated.file_hash]: updated }))
+        }}
       />
     </>
   )

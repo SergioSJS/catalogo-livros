@@ -23,8 +23,8 @@ export function BookGrid({ books, loading, onSelect }) {
 
   return (
     <div className="book-grid">
-      {books.map(book => (
-        <BookCard key={book.file_hash} book={book} onSelect={onSelect} />
+      {books.map((book, idx) => (
+        <BookCard key={book.file_hash} book={book} onSelect={b => onSelect(b, idx)} />
       ))}
     </div>
   )

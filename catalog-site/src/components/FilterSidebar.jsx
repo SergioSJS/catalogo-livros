@@ -124,19 +124,31 @@ export function FilterSidebar({
   )
 }
 
+import { useState } from 'react'
+
 const READ_LABELS = { unread: 'Não lido', reading: 'Lendo', read: 'Lido' }
 const PLAYED_LABELS = { unplayed: 'Não jogado', playing: 'Jogando', played: 'Jogado' }
 
 function FacetGroup({ title, items, active, onToggle }) {
+  const hasActive = active.some(a => items?.some(i => i.value === a))
+  const [open, setOpen] = useState(hasActive)
+
   if (!items?.length) return null
   return (
     <div className="sidebar-section">
-      <h4 className="sidebar-heading">{title}</h4>
-      {items.map(({ value, count }) => (
+      <button
+        className="sidebar-heading sidebar-heading-btn"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-label={title}
+      >
+        {title}
+        <span className="sidebar-heading-caret">{open ? '▴' : '▾'}</span>
+      </button>
+      {open && items.map(({ value, count }) => (
         <label
           key={value}
           className={`facet-item${active.includes(value) ? ' facet-active' : ''}`}
-          onClick={() => onToggle(value)}
         >
           <input
             type="checkbox"

@@ -14,7 +14,7 @@ function stripMarkdown(text) {
     .trim()
 }
 
-export function BookModal({ book, onClose, onUpdate }) {
+export function BookModal({ book, books, bookIndex, onNavigate, hasNextPage, hasPrevPage, onClose, onUpdate }) {
   const [personal, setPersonal] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
@@ -31,6 +31,27 @@ export function BookModal({ book, onClose, onUpdate }) {
     setMeta(null)
     setMetaError(null)
   }, [book?.file_hash])
+
+  const hasBooks = books != null && bookIndex != null
+  const canGoPrev = hasBooks && (bookIndex > 0 || hasPrevPage)
+  const canGoNext = hasBooks && (bookIndex < books.length - 1 || hasNextPage)
+
+  function handlePrev() {
+    if (!canGoPrev) return
+    if (bookIndex > 0) onNavigate(bookIndex - 1)
+    else onNavigate('prev-page')
+  }
+
+  function handleNext() {
+    if (!canGoNext) return
+    if (bookIndex < books.length - 1) onNavigate(bookIndex + 1)
+    else onNavigate('next-page')
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'ArrowRight' && canGoNext) handleNext()
+    if (e.key === 'ArrowLeft' && canGoPrev) handlePrev()
+  }
 
   if (!book) return null
 
@@ -132,9 +153,22 @@ export function BookModal({ book, onClose, onUpdate }) {
       aria-modal="true"
       className="modal-overlay"
       onClick={onClose}
+      onKeyDown={handleKeyDown}
     >
       <div className="modal-box" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} aria-label="Close" className="modal-close">×</button>
+        <div className="modal-top-bar">
+          <button onClick={onClose} aria-label="Close" className="modal-close">×</button>
+          {!editingMeta && (
+            <button className="modal-edit-btn" onClick={openMetaEditor} aria-label="Editar metadados">✎</button>
+          )}
+        </div>
+        {hasBooks && (
+          <div className="modal-nav">
+            <button className="modal-nav-btn" onClick={handlePrev} disabled={!canGoPrev} aria-label="Livro anterior">‹ Anterior</button>
+            <span className="modal-nav-pos">{bookIndex + 1} / {books.length}</span>
+            <button className="modal-nav-btn" onClick={handleNext} disabled={!canGoNext} aria-label="Próximo livro">Próximo ›</button>
+          </div>
+        )}
         <div className="modal-inner">
           <div className="modal-header">
             {thumbnail_url && (
@@ -155,12 +189,6 @@ export function BookModal({ book, onClose, onUpdate }) {
 
           {summary && !editingMeta && (
             <p className="modal-summary">{stripMarkdown(summary)}</p>
-          )}
-
-          {!editingMeta && (
-            <button className="edit-meta-btn" onClick={openMetaEditor} aria-label="Editar metadados">
-              ✎ Editar metadados
-            </button>
           )}
 
           {editingMeta && (

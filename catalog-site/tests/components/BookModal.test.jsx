@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { BookModal } from '../../src/components/BookModal.jsx'
 
 // Mock the API client
@@ -8,6 +8,30 @@ vi.mock('../../src/api/client.js', () => ({
   patchBookMetadata: vi.fn(),
 }))
 import { patchPersonalFields, patchBookMetadata } from '../../src/api/client.js'
+
+const book2 = {
+  file_hash: 'def456',
+  title: 'Cairn',
+  filename: 'cairn.pdf',
+  relative_path: 'EN/OSR/cairn.pdf',
+  parent_folder: 'OSR',
+  language: 'en',
+  page_count: 60,
+  file_size_human: '1.5 MB',
+  system_tags: ['OSR'],
+  category_tags: [],
+  genre_tags: [],
+  custom_tags: [],
+  thumbnail_url: null,
+  summary: 'Cairn RPG.',
+  llm_confidence: null,
+  llm_provider: null,
+  read_status: 'unread',
+  played_status: 'unplayed',
+  solo_friendly: false,
+  review: null,
+  score: null,
+}
 
 const book = {
   file_hash: 'abc123',
@@ -204,9 +228,13 @@ describe('BookModal — editor pessoal', () => {
 })
 
 describe('BookModal — editor de metadados', () => {
-  it('shows edit metadata button', () => {
+  it('shows edit metadata pencil button in same row as close button', () => {
     render(<BookModal book={book} onClose={() => {}} />)
-    expect(screen.getByRole('button', { name: /editar metadados/i })).toBeInTheDocument()
+    const editBtn = screen.getByRole('button', { name: /editar metadados/i })
+    expect(editBtn).toBeInTheDocument()
+    // Both buttons must share the same direct parent (modal-top-bar)
+    const closeBtn = screen.getByRole('button', { name: /close/i })
+    expect(editBtn.parentElement).toBe(closeBtn.parentElement)
   })
 
   it('clicking edit shows title input with current value', () => {
@@ -258,5 +286,71 @@ describe('BookModal — editor de metadados', () => {
     await waitFor(() => {
       expect(patchBookMetadata).toHaveBeenCalledWith('abc123', expect.objectContaining({ system_tags: ['OSR', 'PbtA'] }))
     })
+  })
+})
+
+describe('BookModal — navegação prev/next', () => {
+  it('renders prev/next buttons when books list provided', () => {
+    render(<BookModal book={book} books={[book, book2]} bookIndex={0} onNavigate={() => {}} onClose={() => {}} />)
+    expect(screen.getByRole('button', { name: /anterior/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /próximo/i })).toBeInTheDocument()
+  })
+
+  it('prev button disabled on first book', () => {
+    render(<BookModal book={book} books={[book, book2]} bookIndex={0} onNavigate={() => {}} onClose={() => {}} />)
+    expect(screen.getByRole('button', { name: /anterior/i })).toBeDisabled()
+  })
+
+  it('next button disabled on last book', () => {
+    render(<BookModal book={book2} books={[book, book2]} bookIndex={1} onNavigate={() => {}} onClose={() => {}} />)
+    expect(screen.getByRole('button', { name: /próximo/i })).toBeDisabled()
+  })
+
+  it('clicking next calls onNavigate with next index', () => {
+    const onNavigate = vi.fn()
+    render(<BookModal book={book} books={[book, book2]} bookIndex={0} onNavigate={onNavigate} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /próximo/i }))
+    expect(onNavigate).toHaveBeenCalledWith(1)
+  })
+
+  it('clicking prev calls onNavigate with prev index', () => {
+    const onNavigate = vi.fn()
+    render(<BookModal book={book2} books={[book, book2]} bookIndex={1} onNavigate={onNavigate} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /anterior/i }))
+    expect(onNavigate).toHaveBeenCalledWith(0)
+  })
+
+  it('ArrowRight key calls onNavigate with next index', () => {
+    const onNavigate = vi.fn()
+    render(<BookModal book={book} books={[book, book2]} bookIndex={0} onNavigate={onNavigate} onClose={() => {}} />)
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowRight' })
+    expect(onNavigate).toHaveBeenCalledWith(1)
+  })
+
+  it('ArrowLeft key calls onNavigate with prev index', () => {
+    const onNavigate = vi.fn()
+    render(<BookModal book={book2} books={[book, book2]} bookIndex={1} onNavigate={onNavigate} onClose={() => {}} />)
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowLeft' })
+    expect(onNavigate).toHaveBeenCalledWith(0)
+  })
+
+  it('ArrowRight on last book calls onNavigate with null (cross-page)', () => {
+    const onNavigate = vi.fn()
+    render(<BookModal book={book2} books={[book, book2]} bookIndex={1} onNavigate={onNavigate} hasNextPage onClose={() => {}} />)
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowRight' })
+    expect(onNavigate).toHaveBeenCalledWith('next-page')
+  })
+
+  it('ArrowLeft on first book calls onNavigate with prev-page (cross-page)', () => {
+    const onNavigate = vi.fn()
+    render(<BookModal book={book} books={[book, book2]} bookIndex={0} onNavigate={onNavigate} hasPrevPage onClose={() => {}} />)
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'ArrowLeft' })
+    expect(onNavigate).toHaveBeenCalledWith('prev-page')
+  })
+
+  it('does not render nav buttons without books prop', () => {
+    render(<BookModal book={book} onClose={() => {}} />)
+    expect(screen.queryByRole('button', { name: /anterior/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /próximo/i })).not.toBeInTheDocument()
   })
 })

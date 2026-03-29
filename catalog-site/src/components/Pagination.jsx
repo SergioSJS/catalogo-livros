@@ -1,6 +1,6 @@
 export function Pagination({ page, totalPages, onPage }) {
   return (
-    <div className="pagination">
+    <nav className="pagination" aria-label="Page navigation">
       <button
         onClick={() => onPage(page - 1)}
         disabled={page <= 1}
@@ -18,6 +18,6 @@ export function Pagination({ page, totalPages, onPage }) {
       >
         Next
       </button>
-    </div>
+    </nav>
   )
 }

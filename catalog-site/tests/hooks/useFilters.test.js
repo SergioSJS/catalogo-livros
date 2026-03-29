@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useFilters } from '../../src/hooks/useFilters.js'
+
+beforeEach(() => localStorage.clear())
+afterEach(() => localStorage.clear())
 
 describe('useFilters', () => {
   it('starts with empty filters', () => {
@@ -159,5 +162,32 @@ describe('useFilters', () => {
     expect(result.current.filters.genres).toEqual([])
     expect(result.current.filters.folder).toBeNull()
     expect(result.current.filters.played_status).toBeNull()
+  })
+})
+
+describe('useFilters — localStorage persistence', () => {
+  beforeEach(() => localStorage.clear())
+  afterEach(() => localStorage.clear())
+
+  it('saves filters to localStorage on change', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleSystem('OSR'))
+    const saved = JSON.parse(localStorage.getItem('rpg_filters'))
+    expect(saved?.systems).toContain('OSR')
+  })
+
+  it('restores filters from localStorage on mount', () => {
+    localStorage.setItem('rpg_filters', JSON.stringify({ systems: ['PbtA'], categories: [], genres: [], tags: [], language: null, folder: null, sort: 'title_asc', read_status: null, played_status: null, solo_friendly: null, score_min: null, score_max: null }))
+    const { result } = renderHook(() => useFilters())
+    expect(result.current.filters.systems).toContain('PbtA')
+  })
+
+  it('reset clears localStorage too', () => {
+    localStorage.setItem('rpg_filters', JSON.stringify({ systems: ['OSR'], categories: [], genres: [], tags: [], language: 'en', folder: null, sort: 'title_asc', read_status: null, played_status: null, solo_friendly: null, score_min: null, score_max: null }))
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.reset())
+    const saved = JSON.parse(localStorage.getItem('rpg_filters'))
+    expect(saved?.systems).toEqual([])
+    expect(saved?.language).toBeNull()
   })
 })

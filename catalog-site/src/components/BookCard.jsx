@@ -1,7 +1,7 @@
 const LANG_LABEL = { en: 'EN', pt: 'PT' }
 
 export function BookCard({ book, onSelect }) {
-  const { title, language, system_tags, category_tags, genre_tags, page_count, thumbnail_url, parent_folder } = book
+  const { title, language, system_tags, category_tags, genre_tags, page_count, thumbnail_url, parent_folder, score } = book
 
   return (
     <button onClick={() => onSelect(book)} className="book-card">
@@ -18,6 +18,9 @@ export function BookCard({ book, onSelect }) {
         {language && (
           <span className="card-lang">{LANG_LABEL[language] ?? language.toUpperCase()}</span>
         )}
+        <div className="card-score-overlay" data-testid="score-overlay">
+          {score != null ? '★'.repeat(score) : 'Sem nota'}
+        </div>
       </div>
       <div className="card-body">
         <span className="card-title">{title}</span>

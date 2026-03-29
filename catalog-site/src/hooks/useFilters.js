@@ -1,4 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+
+const LS_KEY = 'rpg_filters'
 
 const INITIAL = {
   systems: [], categories: [], genres: [], tags: [],
@@ -7,8 +9,22 @@ const INITIAL = {
   score_min: null, score_max: null,
 }
 
+function loadFilters() {
+  try {
+    const raw = localStorage.getItem(LS_KEY)
+    if (!raw) return INITIAL
+    return { ...INITIAL, ...JSON.parse(raw) }
+  } catch {
+    return INITIAL
+  }
+}
+
 export function useFilters() {
-  const [filters, setFilters] = useState(INITIAL)
+  const [filters, setFilters] = useState(loadFilters)
+
+  useEffect(() => {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(filters)) } catch {}
+  }, [filters])
 
   const toggleSystem = useCallback((val) => setFilters(f => ({
     ...f, systems: f.systems.includes(val) ? f.systems.filter(s => s !== val) : [...f.systems, val]
