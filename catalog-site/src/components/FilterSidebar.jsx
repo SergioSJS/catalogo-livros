@@ -1,11 +1,14 @@
 export function FilterSidebar({
   facets, filters,
-  onToggleSystem, onToggleCategory, onToggleGenre, onSetLanguage, onSetFolder, onReset,
+  onToggleSystem, onToggleCategory, onToggleGenre,
+  onToggleSystemExclude, onToggleCategoryExclude, onToggleGenreExclude,
+  onSetLanguage, onSetFolder, onReset,
   onSetReadStatus, onSetPlayedStatus, onSetSoloFriendly, onSetScoreMin,
 }) {
   const hasActiveFilters = (
     filters.systems.length > 0 || filters.categories.length > 0 ||
     filters.genres.length > 0 || filters.language || filters.folder ||
+    filters.systems_not?.length > 0 || filters.categories_not?.length > 0 || filters.genres_not?.length > 0 ||
     filters.read_status || filters.played_status || filters.solo_friendly != null || filters.score_min != null
   )
 
@@ -38,9 +41,9 @@ export function FilterSidebar({
         </div>
       )}
 
-      <FacetGroup title="System" items={facets.systems} active={filters.systems} onToggle={onToggleSystem} />
-      <FacetGroup title="Category" items={facets.categories} active={filters.categories} onToggle={onToggleCategory} />
-      <FacetGroup title="Genre" items={facets.genres} active={filters.genres} onToggle={onToggleGenre} />
+      <FacetGroup title="System" items={facets.systems} active={filters.systems} excluded={filters.systems_not} onToggle={onToggleSystem} onExclude={onToggleSystemExclude} />
+      <FacetGroup title="Category" items={facets.categories} active={filters.categories} excluded={filters.categories_not} onToggle={onToggleCategory} onExclude={onToggleCategoryExclude} />
+      <FacetGroup title="Genre" items={facets.genres} active={filters.genres} excluded={filters.genres_not} onToggle={onToggleGenre} onExclude={onToggleGenreExclude} />
 
       {/* Folder */}
       {facets.folders?.length > 0 && (
@@ -129,11 +132,29 @@ import { useState } from 'react'
 const READ_LABELS = { unread: 'Não lido', reading: 'Lendo', read: 'Lido' }
 const PLAYED_LABELS = { unplayed: 'Não jogado', playing: 'Jogando', played: 'Jogado' }
 
-function FacetGroup({ title, items, active, onToggle }) {
+function FacetGroup({ title, items, active, excluded = [], onToggle, onExclude }) {
   const hasActive = active.some(a => items?.some(i => i.value === a))
-  const [open, setOpen] = useState(hasActive)
+  const hasExcluded = excluded.some(e => items?.some(i => i.value === e))
+  const [open, setOpen] = useState(hasActive || hasExcluded)
 
   if (!items?.length) return null
+
+  function handleChange(value) {
+    const isActive = active.includes(value)
+    const isExcluded = excluded.includes(value)
+    if (isExcluded) {
+      // excluded → none
+      onExclude?.(value)
+    } else if (isActive) {
+      // included → excluded
+      onToggle(value)
+      onExclude?.(value)
+    } else {
+      // none → included
+      onToggle(value)
+    }
+  }
+
   return (
     <div className="sidebar-section">
       <button
@@ -145,21 +166,27 @@ function FacetGroup({ title, items, active, onToggle }) {
         {title}
         <span className="sidebar-heading-caret">{open ? '▴' : '▾'}</span>
       </button>
-      {open && items.map(({ value, count }) => (
-        <label
-          key={value}
-          className={`facet-item${active.includes(value) ? ' facet-active' : ''}`}
-        >
-          <input
-            type="checkbox"
-            checked={active.includes(value)}
-            onChange={() => onToggle(value)}
-            aria-label={value}
-          />
-          <span className="facet-name">{value}</span>
-          <span className="facet-count">{count}</span>
-        </label>
-      ))}
+      {open && items.map(({ value, count }) => {
+        const isActive = active.includes(value)
+        const isExcluded = excluded.includes(value)
+        const stateClass = isActive ? ' facet-active' : isExcluded ? ' facet-excluded' : ''
+        return (
+          <label
+            key={value}
+            className={`facet-item${stateClass}`}
+          >
+            <input
+              type="checkbox"
+              checked={isActive || isExcluded}
+              onChange={() => handleChange(value)}
+              aria-label={value}
+            />
+            <span className="facet-name">{value}</span>
+            {isExcluded && <span className="facet-exclude-icon">✕</span>}
+            <span className="facet-count">{count}</span>
+          </label>
+        )
+      })}
     </div>
   )
 }

@@ -27,7 +27,7 @@ async function apiFetch(path, options = {}) {
 
 // ── Catalog ───────────────────────────────────────────────────────────────────
 
-export function fetchBooks({ page = 1, perPage = 24, q, language, systems = [], categories = [], genres = [], tags = [], folder, sort, read_status, played_status, solo_friendly, score_min, score_max } = {}) {
+export function fetchBooks({ page = 1, perPage = 24, q, language, systems = [], categories = [], genres = [], tags = [], systems_not = [], categories_not = [], genres_not = [], tags_not = [], folder, sort, read_status, played_status, solo_friendly, score_min, score_max } = {}) {
   const url = new URL('/api/books', window?.location?.origin ?? 'http://localhost')
   url.searchParams.set('page', page)
   url.searchParams.set('per_page', perPage)
@@ -39,6 +39,10 @@ export function fetchBooks({ page = 1, perPage = 24, q, language, systems = [], 
   categories.forEach(c => url.searchParams.append('category', c))
   genres.forEach(g => url.searchParams.append('genre', g))
   tags.forEach(t => url.searchParams.append('tag', t))
+  systems_not.forEach(s => url.searchParams.append('system_not', s))
+  categories_not.forEach(c => url.searchParams.append('category_not', c))
+  genres_not.forEach(g => url.searchParams.append('genre_not', g))
+  tags_not.forEach(t => url.searchParams.append('tag_not', t))
   if (read_status) url.searchParams.set('read_status', read_status)
   if (played_status) url.searchParams.set('played_status', played_status)
   if (solo_friendly != null) url.searchParams.set('solo_friendly', String(solo_friendly))

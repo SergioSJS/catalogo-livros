@@ -35,6 +35,10 @@ def list_books(
     solo_friendly: bool | None = Query(None),
     score_min: int | None = Query(None, ge=1, le=5),
     score_max: int | None = Query(None, ge=1, le=5),
+    system_not: list[str] = Query(default=[]),
+    category_not: list[str] = Query(default=[]),
+    genre_not: list[str] = Query(default=[]),
+    tag_not: list[str] = Query(default=[]),
 ):
     items, total = db.list_books(
         page=page,
@@ -52,6 +56,10 @@ def list_books(
         solo_friendly=solo_friendly,
         score_min=score_min,
         score_max=score_max,
+        systems_not=system_not or None,
+        categories_not=category_not or None,
+        genres_not=genre_not or None,
+        tags_not=tag_not or None,
     )
     import math
     total_pages = math.ceil(total / per_page) if per_page else 0

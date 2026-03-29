@@ -299,6 +299,10 @@ class Database:
         solo_friendly: bool | None = None,
         score_min: int | None = None,
         score_max: int | None = None,
+        systems_not: list[str] | None = None,
+        categories_not: list[str] | None = None,
+        genres_not: list[str] | None = None,
+        tags_not: list[str] | None = None,
     ) -> tuple[list[BookRecord], int]:
         order = _SORT_MAP.get(sort, "b.title ASC")
         offset = (page - 1) * per_page
@@ -369,6 +373,34 @@ class Database:
         if score_max is not None:
             conditions.append("b.score <= ?")
             params.append(score_max)
+
+        if systems_not:
+            for s in systems_not:
+                conditions.append(
+                    "NOT EXISTS (SELECT 1 FROM json_each(b.system_tags) WHERE json_each.value = ?)"
+                )
+                params.append(s)
+
+        if categories_not:
+            for c in categories_not:
+                conditions.append(
+                    "NOT EXISTS (SELECT 1 FROM json_each(b.category_tags) WHERE json_each.value = ?)"
+                )
+                params.append(c)
+
+        if genres_not:
+            for g in genres_not:
+                conditions.append(
+                    "NOT EXISTS (SELECT 1 FROM json_each(b.genre_tags) WHERE json_each.value = ?)"
+                )
+                params.append(g)
+
+        if tags_not:
+            for t in tags_not:
+                conditions.append(
+                    "NOT EXISTS (SELECT 1 FROM json_each(b.custom_tags) WHERE json_each.value = ?)"
+                )
+                params.append(t)
 
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 

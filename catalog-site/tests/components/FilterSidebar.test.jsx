@@ -12,6 +12,7 @@ const facets = {
 
 const filters = {
   systems: [], categories: [], genres: [], tags: [],
+  systems_not: [], categories_not: [], genres_not: [], tags_not: [],
   language: null, folder: null, sort: 'title_asc',
   read_status: null, played_status: null, solo_friendly: null, score_min: null,
 }
@@ -24,6 +25,9 @@ function defaultProps(overrides = {}) {
     onToggleSystem: noop,
     onToggleCategory: noop,
     onToggleGenre: noop,
+    onToggleSystemExclude: noop,
+    onToggleCategoryExclude: noop,
+    onToggleGenreExclude: noop,
     onSetLanguage: noop,
     onSetFolder: noop,
     onSetReadStatus: noop,
@@ -109,6 +113,48 @@ describe('FilterSidebar — filtros de catálogo', () => {
     render(<FilterSidebar {...defaultProps({ onReset, filters: { ...filters, systems: ['OSR'] } })} />)
     fireEvent.click(screen.getByRole('button', { name: /reset/i }))
     expect(onReset).toHaveBeenCalled()
+  })
+})
+
+describe('FilterSidebar — filtro reverso (3 estados)', () => {
+  it('excluded item auto-expands the group and renders checkbox', () => {
+    render(<FilterSidebar {...defaultProps({
+      filters: { ...filters, systems_not: ['OSR'] }
+    })} />)
+    // Group is auto-expanded because there's an excluded item — no click needed
+    expect(screen.getByRole('checkbox', { name: /OSR/i })).toBeInTheDocument()
+  })
+
+  it('clicking an included item (active) calls onToggleSystemExclude and removes from include', () => {
+    const onToggleSystem = vi.fn()
+    const onToggleSystemExclude = vi.fn()
+    render(<FilterSidebar {...defaultProps({
+      onToggleSystem, onToggleSystemExclude,
+      filters: { ...filters, systems: ['OSR'] }
+    })} />)
+    // OSR is active (included) — click it to go to exclude state
+    fireEvent.click(screen.getByRole('checkbox', { name: 'OSR' }))
+    expect(onToggleSystem).toHaveBeenCalledWith('OSR')  // removes from include
+    expect(onToggleSystemExclude).toHaveBeenCalledWith('OSR')  // adds to exclude
+  })
+
+  it('clicking an excluded item calls onToggleSystemExclude to clear it', () => {
+    const onToggleSystemExclude = vi.fn()
+    render(<FilterSidebar {...defaultProps({
+      onToggleSystemExclude,
+      filters: { ...filters, systems_not: ['OSR'] }
+    })} />)
+    // Group is auto-expanded — no expand click needed
+    fireEvent.click(screen.getByRole('checkbox', { name: 'OSR' }))
+    expect(onToggleSystemExclude).toHaveBeenCalledWith('OSR')
+  })
+
+  it('excluded item label has facet-excluded CSS class', () => {
+    const { container } = render(<FilterSidebar {...defaultProps({
+      filters: { ...filters, systems_not: ['OSR'] }
+    })} />)
+    // Group is auto-expanded
+    expect(container.querySelector('.facet-excluded')).toBeInTheDocument()
   })
 })
 

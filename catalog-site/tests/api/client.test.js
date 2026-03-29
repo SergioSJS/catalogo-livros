@@ -172,6 +172,29 @@ describe('fetchBooks extra filters', () => {
   })
 })
 
+describe('fetchBooks NOT filters', () => {
+  it('passes system_not as repeated params', async () => {
+    mockFetch.mockReturnValue(mockOk({ items: [], pagination: {} }))
+    await fetchBooks({ systems_not: ['OSR', 'PbtA'] })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.getAll('system_not')).toEqual(['OSR', 'PbtA'])
+  })
+
+  it('passes category_not params', async () => {
+    mockFetch.mockReturnValue(mockOk({ items: [], pagination: {} }))
+    await fetchBooks({ categories_not: ['Core Rulebook'] })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.getAll('category_not')).toEqual(['Core Rulebook'])
+  })
+
+  it('passes genre_not params', async () => {
+    mockFetch.mockReturnValue(mockOk({ items: [], pagination: {} }))
+    await fetchBooks({ genres_not: ['Fantasy'] })
+    const url = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.getAll('genre_not')).toEqual(['Fantasy'])
+  })
+})
+
 describe('fetchFacets extra params', () => {
   it('passes multiple systems', async () => {
     mockFetch.mockReturnValue(mockOk({}))

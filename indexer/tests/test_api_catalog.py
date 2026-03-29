@@ -287,3 +287,35 @@ def test_patch_metadata_updates_fts(seeded_client):
     r = seeded_client.get("/api/books?q=Único")
     items = r.json()["items"]
     assert any(b["file_hash"] == "hash_a" for b in items)
+
+
+def test_filter_exclude_system(seeded_client):
+    r = seeded_client.get("/api/books?system_not=OSR")
+    items = r.json()["items"]
+    assert all("OSR" not in b["system_tags"] for b in items)
+
+
+def test_filter_exclude_system_removes_book(seeded_client):
+    r_all = seeded_client.get("/api/books")
+    r_exc = seeded_client.get("/api/books?system_not=OSR")
+    assert r_exc.json()["pagination"]["total_items"] < r_all.json()["pagination"]["total_items"]
+
+
+def test_filter_exclude_category(seeded_client):
+    r = seeded_client.get("/api/books?category_not=Core+Rulebook")
+    items = r.json()["items"]
+    assert all("Core Rulebook" not in b["category_tags"] for b in items)
+
+
+def test_filter_exclude_genre(seeded_client):
+    r = seeded_client.get("/api/books?genre_not=Fantasy")
+    items = r.json()["items"]
+    assert all("Fantasy" not in b["genre_tags"] for b in items)
+
+
+def test_filter_include_and_exclude_combined(seeded_client):
+    # Include books with 'OSR', but exclude those with 'Fantasy' genre
+    r = seeded_client.get("/api/books?system=OSR&genre_not=Fantasy")
+    items = r.json()["items"]
+    assert all("OSR" in b["system_tags"] for b in items)
+    assert all("Fantasy" not in b["genre_tags"] for b in items)

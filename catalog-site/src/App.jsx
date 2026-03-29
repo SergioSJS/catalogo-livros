@@ -29,7 +29,7 @@ export default function App() {
   const [bookUpdates, setBookUpdates] = useState({})
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const { filters, toggleSystem, toggleCategory, toggleGenre, setLanguage, setFolder, setSort, setReadStatus, setPlayedStatus, setSoloFriendly, setScoreMin, reset, toParams } = useFilters()
+  const { filters, toggleSystem, toggleCategory, toggleGenre, toggleExcludeSystem, toggleExcludeCategory, toggleExcludeGenre, setLanguage, setFolder, setSort, setReadStatus, setPlayedStatus, setSoloFriendly, setScoreMin, reset, toParams } = useFilters()
   const { inputValue, q, setInput, clear } = useSearch()
   const indexer = useIndexer()
 
@@ -58,6 +58,9 @@ export default function App() {
     onToggleSystem: handleFilterChange(toggleSystem),
     onToggleCategory: handleFilterChange(toggleCategory),
     onToggleGenre: handleFilterChange(toggleGenre),
+    onToggleSystemExclude: handleFilterChange(toggleExcludeSystem),
+    onToggleCategoryExclude: handleFilterChange(toggleExcludeCategory),
+    onToggleGenreExclude: handleFilterChange(toggleExcludeGenre),
     onSetLanguage: handleFilterChange(setLanguage),
     onSetFolder: handleFilterChange(setFolder),
     onSetReadStatus: handleFilterChange(setReadStatus),

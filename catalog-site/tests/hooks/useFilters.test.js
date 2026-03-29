@@ -165,6 +165,56 @@ describe('useFilters', () => {
   })
 })
 
+describe('useFilters — exclude filters', () => {
+  it('starts with empty exclusions', () => {
+    const { result } = renderHook(() => useFilters())
+    expect(result.current.filters.systems_not).toEqual([])
+    expect(result.current.filters.categories_not).toEqual([])
+    expect(result.current.filters.genres_not).toEqual([])
+  })
+
+  it('toggleExcludeSystem adds to systems_not', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleExcludeSystem('OSR'))
+    expect(result.current.filters.systems_not).toContain('OSR')
+  })
+
+  it('toggleExcludeSystem removes when already excluded', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleExcludeSystem('OSR'))
+    act(() => result.current.toggleExcludeSystem('OSR'))
+    expect(result.current.filters.systems_not).not.toContain('OSR')
+  })
+
+  it('toggleExcludeCategory adds to categories_not', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleExcludeCategory('Core Rulebook'))
+    expect(result.current.filters.categories_not).toContain('Core Rulebook')
+  })
+
+  it('toggleExcludeGenre adds to genres_not', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleExcludeGenre('Fantasy'))
+    expect(result.current.filters.genres_not).toContain('Fantasy')
+  })
+
+  it('reset clears exclusions', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleExcludeSystem('OSR'))
+    act(() => result.current.reset())
+    expect(result.current.filters.systems_not).toEqual([])
+  })
+
+  it('toParams includes systems_not, categories_not, genres_not', () => {
+    const { result } = renderHook(() => useFilters())
+    act(() => result.current.toggleExcludeSystem('OSR'))
+    act(() => result.current.toggleExcludeGenre('Fantasy'))
+    const params = result.current.toParams()
+    expect(params.systems_not).toContain('OSR')
+    expect(params.genres_not).toContain('Fantasy')
+  })
+})
+
 describe('useFilters — localStorage persistence', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => localStorage.clear())

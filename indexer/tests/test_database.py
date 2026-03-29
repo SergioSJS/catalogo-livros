@@ -239,3 +239,33 @@ def test_update_personal_fields_partial(db):
 def test_update_personal_fields_unknown_hash_no_error(db):
     # Não deve lançar exceção para hash inexistente
     db.update_personal_fields("nonexistent", read_status="read")
+
+
+# ── NOT filters ──────────────────────────────────────────────────────────────
+
+def test_list_books_exclude_system(seeded_db):
+    results, total = seeded_db.list_books(systems_not=["OSR"])
+    hashes = [b.file_hash for b in results]
+    assert "hash_a" not in hashes  # has OSR
+    assert "hash_b" not in hashes  # has OSR
+    assert "hash_c" in hashes      # PbtA only
+    assert "hash_d" in hashes      # PbtA only
+
+
+def test_list_books_exclude_category(seeded_db):
+    results, _ = seeded_db.list_books(categories_not=["Core Rulebook"])
+    for b in results:
+        assert "Core Rulebook" not in b.category_tags
+
+
+def test_list_books_exclude_genre(seeded_db):
+    results, _ = seeded_db.list_books(genres_not=["Fantasy"])
+    for b in results:
+        assert "Fantasy" not in b.genre_tags
+
+
+def test_list_books_include_and_exclude_combined(seeded_db):
+    # Include OSR, exclude Horror
+    results, _ = seeded_db.list_books(systems=["OSR"], genres_not=["Horror"])
+    assert all("OSR" in b.system_tags for b in results)
+    assert all("Horror" not in b.genre_tags for b in results)
