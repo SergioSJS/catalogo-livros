@@ -14,6 +14,7 @@ import { Pagination } from './components/Pagination.jsx'
 import { IndexingPanel } from './components/IndexingPanel.jsx'
 import { EnrichingPanel } from './components/EnrichingPanel.jsx'
 import { BulkActionBar } from './components/BulkActionBar.jsx'
+import { StatsPanel } from './components/StatsPanel.jsx'
 import { fetchRandomBook, fetchVersion, buildExportUrl, patchBooksBulk } from './api/client.js'
 
 const FRONTEND_VERSION = import.meta.env.VITE_APP_VERSION ?? 'dev'
@@ -37,6 +38,7 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [pendingNav, setPendingNav] = useState(null) // 'first' | 'last'
   const [backendVersion, setBackendVersion] = useState(null)
+  const [showStats, setShowStats] = useState(false)
   const [bulkMode, setBulkMode] = useState(false)
   const [selectedHashes, setSelectedHashes] = useState(new Set())
   const [bulkSaving, setBulkSaving] = useState(false)
@@ -165,6 +167,12 @@ export default function App() {
             {dark ? '☀' : '🌙'}
           </button>
           <button
+            className={`bulk-toggle${showStats ? ' bulk-toggle-active' : ''}`}
+            onClick={() => setShowStats(s => !s)}
+            aria-label="Estatísticas"
+            title="Estatísticas da coleção"
+          >📊</button>
+          <button
             className={`bulk-toggle${bulkMode ? ' bulk-toggle-active' : ''}`}
             onClick={() => { setBulkMode(m => !m); setSelectedHashes(new Set()) }}
             aria-label="Edição em massa"
@@ -177,6 +185,12 @@ export default function App() {
           <SearchBar value={inputValue} onChange={handleSearch} onClear={() => { clear(); setPage(1) }} />
         </div>
       </header>
+
+      {showStats && (
+        <div className="stats-drawer">
+          <StatsPanel />
+        </div>
+      )}
 
       {/* Mobile filter drawer */}
       {drawerOpen && (

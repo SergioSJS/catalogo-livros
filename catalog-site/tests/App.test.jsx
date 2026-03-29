@@ -22,6 +22,11 @@ vi.mock('../src/api/client.js', () => ({
   fetchEnrichStatus: vi.fn().mockResolvedValue({ status: 'idle', progress: null }),
   fetchEnrichFailedCount: vi.fn().mockResolvedValue({ count: 0 }),
   postEnrich: vi.fn().mockResolvedValue({ job_id: 'enr-1', status: 'started' }),
+  fetchStats: vi.fn().mockResolvedValue({
+    total_books: 10, total_size_human: '50 MB', total_pages: 500,
+    by_language: { en: 8, pt: 2 }, by_system_top10: [{ value: 'OSR', count: 5 }],
+    by_category: [], oldest_indexed: null, newest_indexed: null,
+  }),
   buildExportUrl: vi.fn(() => '/api/export?format=json'),
 }))
 
@@ -145,5 +150,29 @@ describe('App — stale modal data fix', () => {
     fireEvent.click(card)
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText('Mausritter')).toBeInTheDocument()
+  })
+})
+
+describe('App — StatsPanel (C9)', () => {
+  beforeEach(() => {
+    useBooks.mockReturnValue({ items: [], pagination: emptyPagination, loading: false })
+    useFacets.mockReturnValue({ facets: emptyFacets, loading: false })
+    useIndexer.mockReturnValue({ status: 'idle', isIndexing: false, progress: null, error: null, startIndex: vi.fn() })
+  })
+
+  it('stats toggle button is in the header', () => {
+    render(<App />)
+    expect(screen.getByRole('button', { name: /estatísticas/i })).toBeInTheDocument()
+  })
+
+  it('StatsPanel is hidden by default', () => {
+    render(<App />)
+    expect(screen.queryByText(/por idioma/i)).not.toBeInTheDocument()
+  })
+
+  it('clicking stats toggle shows StatsPanel content', async () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /estatísticas/i }))
+    await waitFor(() => expect(screen.getByText(/por idioma/i)).toBeInTheDocument())
   })
 })

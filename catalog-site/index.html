@@ -80,6 +80,31 @@
     }
     .footer-version { color: rgba(255,255,255,.4); font-size: 11px; }
 
+    /* ── Stats ──────────────────────────────────────────────────── */
+    .stats-drawer {
+      background: var(--bg-subtle); border-bottom: 1px solid #e2d9ce;
+      padding: 16px 24px; overflow-x: auto;
+    }
+    .stats-panel { max-width: 900px; margin: 0 auto; }
+    .stats-grid {
+      display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .stat-card {
+      background: #fff; border: 1px solid #e2d9ce; border-radius: 8px;
+      padding: 12px 20px; min-width: 110px; text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+    .stat-value { display: block; font-size: 22px; font-weight: 700; color: var(--primary); }
+    .stat-label { display: block; font-size: 11px; color: #888; margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+    .stats-section { margin-bottom: 12px; }
+    .stats-section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #888; margin: 0 0 6px; }
+    .stats-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+    .stats-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .stats-row-label { min-width: 130px; color: var(--ink); }
+    .stats-row-count { color: #888; font-size: 12px; min-width: 28px; text-align: right; }
+    .stats-bar-wrap { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 80px; }
+    .stats-bar { height: 6px; background: var(--primary); border-radius: 3px; min-width: 2px; }
+
     /* ── Toolbar ────────────────────────────────────────────────── */
     .toolbar {
       display: flex; align-items: center; justify-content: space-between;
