@@ -218,6 +218,11 @@ class StatsResponse(BaseModel):
     by_category: list[FacetItem]
     oldest_indexed: str | None
     newest_indexed: str | None
+    by_read_status: dict[str, int] = {}
+    by_played_status: dict[str, int] = {}
+    by_score: dict[int, int] = {}
+    with_review: int = 0
+    avg_score: float | None = None
 
 
 class BookMetadataUpdate(BaseModel):

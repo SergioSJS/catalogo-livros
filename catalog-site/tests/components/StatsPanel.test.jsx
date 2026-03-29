@@ -13,14 +13,17 @@ const STATS = {
   by_system_top10: [
     { value: 'OSR', count: 15 },
     { value: 'PbtA', count: 10 },
-    { value: 'D&D 5e', count: 8 },
   ],
   by_category: [
     { value: 'Core Rulebook', count: 20 },
-    { value: 'Supplement', count: 14 },
   ],
   oldest_indexed: '2025-01-01T00:00:00Z',
   newest_indexed: '2026-03-01T00:00:00Z',
+  by_read_status: { unread: 20, reading: 12, read: 10 },
+  by_played_status: { unplayed: 35, playing: 5, played: 2 },
+  by_score: { 5: 3, 4: 6, 3: 2 },
+  with_review: 8,
+  avg_score: 4.1,
 }
 
 const server = setupServer(
@@ -46,13 +49,46 @@ describe('StatsPanel', () => {
     await waitFor(() => expect(screen.getByText('3200')).toBeInTheDocument())
   })
 
+  it('shows average score card', async () => {
+    render(<StatsPanel />)
+    await waitFor(() => expect(screen.getByText(/4\.1.*★/)).toBeInTheDocument())
+  })
+
+  it('shows with_review count', async () => {
+    render(<StatsPanel />)
+    await waitFor(() => expect(screen.getByText('8')).toBeInTheDocument())
+  })
+
+  it('shows read status breakdown', async () => {
+    render(<StatsPanel />)
+    await waitFor(() => {
+      expect(screen.getByText('Lido')).toBeInTheDocument()
+      expect(screen.getByText('Lendo')).toBeInTheDocument()
+      expect(screen.getByText('Não lido')).toBeInTheDocument()
+    })
+  })
+
+  it('shows played status breakdown', async () => {
+    render(<StatsPanel />)
+    await waitFor(() => {
+      expect(screen.getByText('Progresso de jogo')).toBeInTheDocument()
+      expect(screen.getByText('Jogando')).toBeInTheDocument()
+    })
+  })
+
+  it('shows score distribution', async () => {
+    render(<StatsPanel />)
+    await waitFor(() => {
+      expect(screen.getByText('★★★★★')).toBeInTheDocument()
+      expect(screen.getByText('★★★★')).toBeInTheDocument()
+    })
+  })
+
   it('shows language breakdown', async () => {
     render(<StatsPanel />)
     await waitFor(() => {
       expect(screen.getByText('en')).toBeInTheDocument()
-      expect(screen.getByText('30')).toBeInTheDocument()
       expect(screen.getByText('pt')).toBeInTheDocument()
-      expect(screen.getByText('12')).toBeInTheDocument()
     })
   })
 
@@ -66,10 +102,7 @@ describe('StatsPanel', () => {
 
   it('shows top categories', async () => {
     render(<StatsPanel />)
-    await waitFor(() => {
-      expect(screen.getByText('Core Rulebook')).toBeInTheDocument()
-      expect(screen.getByText('Supplement')).toBeInTheDocument()
-    })
+    await waitFor(() => expect(screen.getByText('Core Rulebook')).toBeInTheDocument())
   })
 
   it('shows loading state initially', () => {

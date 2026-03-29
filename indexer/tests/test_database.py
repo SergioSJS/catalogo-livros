@@ -226,6 +226,30 @@ def test_get_stats(seeded_db):
     assert stats["by_language"]["pt"] == 2
 
 
+def test_get_stats_personal_fields(db):
+    """get_stats deve incluir breakdown de read_status, played_status, score e with_review."""
+    books = [make_book(s) for s in ("a", "b", "c", "d")]
+    for b in books:
+        db.upsert_book(b)
+    db.update_personal_fields("hash_a", read_status="read", score=5, review="Ótimo!")
+    db.update_personal_fields("hash_b", read_status="reading", score=4)
+    db.update_personal_fields("hash_c", played_status="played", score=3)
+    # hash_d: unread, unplayed, no score, no review
+
+    stats = db.get_stats()
+
+    assert stats["by_read_status"]["read"] == 1
+    assert stats["by_read_status"]["reading"] == 1
+    assert stats["by_read_status"]["unread"] == 2
+    assert stats["by_played_status"]["played"] == 1
+    assert stats["by_played_status"]["unplayed"] == 3
+    assert stats["with_review"] == 1
+    assert stats["by_score"][5] == 1
+    assert stats["by_score"][4] == 1
+    assert stats["by_score"][3] == 1
+    assert round(stats["avg_score"], 1) == 4.0   # (5+4+3)/3
+
+
 # ── Campos pessoais ───────────────────────────────────────────────────────────
 
 def test_schema_has_personal_fields(db):

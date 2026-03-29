@@ -618,6 +618,26 @@ class Database:
                 GROUP BY val ORDER BY cnt DESC
             """).fetchall()
 
+            read_rows = conn.execute(
+                "SELECT read_status, COUNT(*) as cnt FROM books GROUP BY read_status"
+            ).fetchall()
+
+            played_rows = conn.execute(
+                "SELECT played_status, COUNT(*) as cnt FROM books GROUP BY played_status"
+            ).fetchall()
+
+            score_rows = conn.execute(
+                "SELECT score, COUNT(*) as cnt FROM books WHERE score IS NOT NULL GROUP BY score"
+            ).fetchall()
+
+            review_row = conn.execute(
+                "SELECT COUNT(*) as cnt FROM books WHERE review IS NOT NULL AND review != ''"
+            ).fetchone()
+
+            avg_row = conn.execute(
+                "SELECT AVG(score) as avg FROM books WHERE score IS NOT NULL"
+            ).fetchone()
+
         from src.models import _human_size
         return {
             "total_books": row["total_books"],
@@ -629,6 +649,11 @@ class Database:
             "by_category": [{"value": r["val"], "count": r["cnt"]} for r in cat_rows],
             "oldest_indexed": row["oldest"],
             "newest_indexed": row["newest"],
+            "by_read_status": {r["read_status"]: r["cnt"] for r in read_rows},
+            "by_played_status": {r["played_status"]: r["cnt"] for r in played_rows},
+            "by_score": {r["score"]: r["cnt"] for r in score_rows},
+            "with_review": review_row["cnt"],
+            "avg_score": avg_row["avg"],
         }
 
     # ── Index runs ────────────────────────────────────────────────────────────

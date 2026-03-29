@@ -98,12 +98,15 @@
     .stat-label { display: block; font-size: 11px; color: #888; margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
     .stats-section { margin-bottom: 12px; }
     .stats-section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #888; margin: 0 0 6px; }
+    .stats-columns { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 12px; }
+    .stats-columns .stats-section { flex: 1; min-width: 140px; margin-bottom: 0; }
     .stats-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+    .stats-list-row { flex-direction: column; }
     .stats-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-    .stats-row-label { min-width: 130px; color: var(--ink); }
-    .stats-row-count { color: #888; font-size: 12px; min-width: 28px; text-align: right; }
-    .stats-bar-wrap { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 80px; }
-    .stats-bar { height: 6px; background: var(--primary); border-radius: 3px; min-width: 2px; }
+    .stats-row-label { min-width: 120px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stats-row-count { color: #888; font-size: 12px; min-width: 28px; text-align: right; flex-shrink: 0; }
+    .stats-bar-wrap { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 60px; }
+    .stats-bar { height: 6px; background: var(--primary); border-radius: 3px; min-width: 2px; transition: width .3s; }
 
     /* ── Toolbar ────────────────────────────────────────────────── */
     .toolbar {
